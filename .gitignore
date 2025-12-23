@@ -2,9 +2,6 @@
 **/__pycache__/
 *.pyc
 
-# Dataset and checkpoint folders in GEN3C
-GEN3C/
-
 # Output and temporary files
 dataset/
 outputs/
