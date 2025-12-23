@@ -2,7 +2,9 @@
 
 <div align="center">
 
-**3D-Informed World-Consistent Video Generation with Precise Camera Control**
+**Multi-modal Novel View Synthesis**
+
+3D-Informed World-Consistent Video Generation with Precise Camera Control
 
 </div>
 
