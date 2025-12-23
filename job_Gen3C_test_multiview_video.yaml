@@ -1,0 +1,105 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gen3c-test-single-image-rendering-pixel-focus
+spec:
+  template:
+    metadata:
+      name: gen3c-test-single-image-rendering-pixel-focus
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nvidia.com/gpu.product
+                operator: In
+                values:
+                - NVIDIA-A100-SXM4-80GB
+      restartPolicy: Never
+      containers:
+      - name: python-container
+        image: python:3.10
+        command: [ "/bin/bash", "-c" ]
+        args:
+        - |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential libc6-dev git wget pkg-config ca-certificates \
+            libgl1 libglib2.0-0 
+          rm -rf /var/lib/apt/lists/*
+
+          curl -fsSL https://pixi.sh/install.sh | bash
+          export PATH="/root/.pixi/bin:$PATH"
+          export PIXI_HOME="/root/.pixi"
+
+          cd /data-world-model/world-models/GEN3C-Project
+          pixi install 
+          pixi run install-all-deps
+          pixi run copy-custom
+
+          pixi run run_render_only_multiview_waymo_video_input_generic -- \
+          --input_folder drone_samples/test_video_121_frames \
+          --trajectory_generation_method source_to_target_linear_interpolation \
+          --source_pose_path drone_samples/test_video_121_frames/source_pose.npy \
+          --target_pose_path drone_samples/test_video_121_frames/target_pose.npy \
+          --start_transition_frames 0 \
+          --end_transition_frames 120 \
+          --align_depth_with_lidar \
+          --rendered_images_path waymo_video_input_multiview_warp_images_source_to_target_lidar.pt  \
+          --rendered_masks_path waymo_video_input_multiview_warp_masks_source_to_target_lidar.pt
+
+          pixi run run_render_only_multiview_waymo_video_input_generic -- \
+          --input_folder drone_samples/test_video_121_frames \
+          --trajectory_generation_method action_based_movement \
+          --trajectory zoom_out \
+          --camera_rotation center_facing \
+          --movement_distance 20 \
+          --align_depth_with_lidar \
+          --rendered_images_path waymo_video_input_multiview_warp_images_zoom_out.pt \
+          --rendered_masks_path waymo_video_input_multiview_warp_masks_zoom_out.pt
+
+          pixi run run_generate_rendering_video_generic -- \
+          --rendered_images_path waymo_video_input_multiview_warp_images_zoom_out.pt \
+          --video_save_name test_diffusion_only_waymo_multiview_video_zoom_out
+
+          pixi run run_diffusion_only_generic -- \
+          --input_image_path  drone_samples/test_video_121_frames/source_image.png \
+          --rendered_images_path waymo_video_input_multiview_warp_images_zoom_out.pt \
+          --rendered_masks_path waymo_video_input_multiview_warp_masks_zoom_out.pt \
+          --video_save_name test_diffusion_only_waymo_multiview_video_zoom_out \
+          --guidance 1 \
+          --prompt "" \
+          --save_buffer
+
+
+
+
+
+        resources:
+          limits:
+            nvidia.com/a100: 1
+            cpu: "4"  # Maximum CPU usage
+            memory: "120G"  # Maximum memory usage
+          requests:
+            nvidia.com/a100: 1
+            cpu: "4"  # Minimum CPU allocation
+            memory: "100G"  # Minimum memory allocation
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+          - mountPath: /data
+            name: amir-pvc-videocompression
+          - mountPath: /data-world-model
+            name: amir-pvc-world-model
+      volumes:
+      - name: amir-pvc-videocompression
+        persistentVolumeClaim:
+          claimName: amir-pvc-videocompression
+      - name: amir-pvc-world-model
+        persistentVolumeClaim:
+          claimName: amir-pvc-world-model
+      - name: dshm
+        emptyDir:     
+          medium: Memory
+  backoffLimit: 0

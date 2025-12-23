@@ -1,0 +1,44 @@
+# Python cache files
+**/__pycache__/
+*.pyc
+
+# Dataset and checkpoint folders in GEN3C
+GEN3C/
+
+# Output and temporary files
+dataset/
+outputs/
+rendered_tensor_dir/
+
+# DVC tracked data (managed by data.dvc)
+drone_samples/
+rendered_videos/
+*.mp4
+*.avi
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+/drone_samples
+/rendered_videos
