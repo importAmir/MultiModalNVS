@@ -83,6 +83,7 @@ pixi run copy-custom
 **Important**: Run this command every time you modify any of the custom scripts to ensure your changes are available in the GEN3C pipeline.
 
 ### 11. Reading drone samples data with DVC
+
 Once DVC is set up, you can easily manage the drone samples dataset:
 
 ```bash
@@ -91,12 +92,10 @@ dvc pull
 
 # Check the status of your local data vs remote storage
 dvc status
-
-# To update data to the latest version
-dvc pull --all-branches
 ```
 
 **Common DVC operations:**
+
 - `dvc pull`: Downloads data from remote storage to your local workspace
 - `dvc push`: Uploads local data changes to remote storage
 - `dvc status`: Shows if your local data matches the remote version
@@ -104,6 +103,11 @@ dvc pull --all-branches
 - `dvc remove <folder>`: Stop tracking a folder (doesn't delete the data)
 
 **Note**: The `drone_samples` folder is automatically ignored by Git but tracked by DVC. This means you can safely delete the local folder and restore it anytime with `dvc pull`.
+
+To update data to the latest version:
+```bash
+dvc pull --all-branches
+```
 
 ## Rendering Strategies
 
