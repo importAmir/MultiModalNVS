@@ -216,7 +216,12 @@ def create_parser() -> argparse.ArgumentParser:
         "--lidar_path",
         type=str,
         default=None,
-        help="Path to LiDAR depth map (.npy file) for depth alignment. Required when --align_depth_with_lidar is set."
+        help=(
+            "Path to a depth map (.npy). "
+            "If --align_depth_with_lidar is set, this is treated as LiDAR depth used to align the predicted depth. "
+            "If --align_depth_with_lidar is NOT set and --lidar_path is provided, this depth map is used directly "
+            "as input depth, and the valid mask is auto-generated as (depth > 0)."
+        )
     )
     
     return parser
@@ -231,8 +236,58 @@ def create_rendering(args) -> None:
     misc.set_random_seed(args.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
+    # If the user provides --lidar_path WITHOUT --align_depth_with_lidar, use it directly
+    # as input depth and auto-generate a valid mask as (depth > 0).
+    if args.lidar_path is not None and not args.align_depth_with_lidar:
+        depth_path = Path(args.lidar_path)
+        if not depth_path.exists():
+            raise FileNotFoundError(f"Depth file not found: {depth_path}")
+
+        depth_np = np.load(depth_path).astype(np.float32)
+        if depth_np.ndim == 3 and depth_np.shape[0] == 1:
+            depth_np = depth_np[0]
+
+        if depth_np.shape != (args.height, args.width):
+            # sparse-aware resizing (preserves zeros)
+            depth_np = _resize_sparse_depth(depth_np, (args.height, args.width))
+
+        mask_np = (depth_np > 0).astype(np.float32)
+
+        # Read and prepare input image
+        input_image_np = cv2.imread(args.input_image_path)
+        input_image_rgb = cv2.cvtColor(input_image_np, cv2.COLOR_BGR2RGB)
+        input_image_resized = cv2.resize(input_image_rgb, (args.width, args.height))
+        input_image = (
+            torch.from_numpy(input_image_resized)
+            .permute(2, 0, 1)
+            .unsqueeze(0)
+            .float()
+            / 127.5
+            - 1.0
+        ).to(device)
+
+        input_depth = torch.from_numpy(depth_np).float().unsqueeze(0).unsqueeze(0).to(device)  # [1, 1, H, W]
+        input_mask = torch.from_numpy(mask_np).float().unsqueeze(0).unsqueeze(0).to(device)    # [1, 1, H, W]
+
+        # Default camera parameters (user should provide these if needed)
+        initial_w2c = torch.eye(4, device=device, dtype=torch.float32).unsqueeze(0)  # [1, 4, 4]
+
+        # Use default intrinsics scaled to current resolution
+        actual_height, actual_width = input_image_np.shape[:2]
+        fx = args.default_fx * (args.width / actual_width)
+        fy = args.default_fy * (args.height / actual_height)
+        cx = args.default_cx * (args.width / actual_width)
+        cy = args.default_cy * (args.height / actual_height)
+
+        intrinsics_matrix = torch.tensor(
+            [[fx, 0, cx], [0, fy, cy], [0, 0, 1]],
+            device=device,
+            dtype=torch.float32,
+        )
+        initial_intrinsics = intrinsics_matrix.unsqueeze(0)
+
     # Choose depth estimator based on argument
-    if args.depth_estimator == "moge":
+    elif args.depth_estimator == "moge":
         moge_model = MoGeModel.from_pretrained("Ruicheng/moge-vitl").to(device)
         
         (
@@ -376,13 +431,16 @@ def create_rendering(args) -> None:
     frame_buffer_max = 2
     generator = torch.Generator(device=device).manual_seed(args.seed)
 
+    # Use provided mask if available (from sparse depth input or MoGe)
+    cache_input_mask = input_mask if (args.lidar_path is not None and not args.align_depth_with_lidar) or args.depth_estimator == "moge" else None
+    
     cache = Cache3D_Buffer(
         frame_buffer_max=frame_buffer_max,
         generator=generator,
         noise_aug_strength=args.noise_aug_strength,
         input_image=input_image,  # [B, C, H, W]
         input_depth=input_depth,  # [B, 1, H, W]
-        # input_mask=input_mask,         # [B, 1, H, W]
+        input_mask=cache_input_mask,  # [B, 1, H, W] - use provided mask for sparse depth or MoGe
         input_w2c=initial_w2c,            # [B, 4, 4]
         input_intrinsics=initial_intrinsics,       # [B, 3, 3]
         filter_points_threshold=args.filter_points_threshold,

@@ -82,33 +82,6 @@ pixi run copy-custom
 
 **Important**: Run this command every time you modify any of the custom scripts to ensure your changes are available in the GEN3C pipeline.
 
-### 11. Reading drone samples data with DVC
-
-Once DVC is set up, you can easily manage the drone samples dataset:
-
-```bash
-# Pull the latest drone samples data from Azure storage
-dvc pull
-
-# Check the status of your local data vs remote storage
-dvc status
-```
-
-**Common DVC operations:**
-
-- `dvc pull`: Downloads data from remote storage to your local workspace
-- `dvc push`: Uploads local data changes to remote storage
-- `dvc status`: Shows if your local data matches the remote version
-- `dvc add <folder>`: Start tracking a new folder with DVC
-- `dvc remove <folder>`: Stop tracking a folder (doesn't delete the data)
-
-**Note**: The `drone_samples` folder is automatically ignored by Git but tracked by DVC. This means you can safely delete the local folder and restore it anytime with `dvc pull`.
-
-To update data to the latest version:
-```bash
-dvc pull --all-branches
-```
-
 ## Rendering Strategies
 
 The script supports three different strategies for generating camera trajectories:
@@ -147,6 +120,51 @@ The script supports two depth estimation approaches:
 - **Additional requirements**: 
   - Default camera intrinsics in original image size: `--default_fx`, `--default_fy`, `--default_cx`, `--default_cy`
 
+## Using Sparse Depth Maps and Masks
+
+Use `--lidar_path` to pass a sparse depth map directly (no depth prediction). The script will auto-generate the valid mask as `(depth > 0)`.
+
+### Depth file format
+- **File**: NumPy `.npy`
+- **Shape**: `(H, W)` (or `(1, H, W)`)
+- **Dtype**: `float32`
+- **Units**: meters
+- **Invalid**: set invalid pixels to `0` (they will be masked out)
+
+### Example: Direct sparse depth (`--lidar_path`)
+
+```bash
+pixi run run_render_only_image_generic -- \
+  --input_image_path path/to/your/image.jpg \
+  --lidar_path my_sparse_depth.npy \
+  --trajectory_generation_method action_based_movement \
+  --trajectory left \
+  --camera_rotation center_facing \
+  --movement_distance 0.3 \
+  --default_fx 800.0 \
+  --default_fy 800.0 \
+  --default_cx 640.0 \
+  --default_cy 360.0 \
+  --rendered_images_path rendered_warp_images_sparse.pt \
+  --rendered_masks_path rendered_warp_masks_sparse.pt
+```
+
+```bash
+pixi run run_diffusion_only_generic -- \
+  --input_image_path path/to/your/image.jpg \
+  --rendered_images_path rendered_warp_images_sparse.pt \
+  --rendered_masks_path rendered_warp_masks_sparse.pt \
+  --video_save_name test_diffusion_only_sparse_depth \
+  --guidance 1 \
+  --prompt "" \
+  --save_buffer
+```
+
+Notes:
+- **Mask**: auto-generated as `(depth > 0)`
+- **Resizing**: depth is resized (sparse-aware) to match `--height`/`--width` if needed
+- **Camera**: pose defaults to identity; intrinsics come from `--default_fx/fy/cx/cy`
+- **Alignment mode**: add `--align_depth_with_lidar` to use LiDAR to align a *predicted* depth instead of using LiDAR depth directly
 
 ## Running Your Scripts
 
