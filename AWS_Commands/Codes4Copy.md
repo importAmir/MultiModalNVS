@@ -21,3 +21,4 @@ scp -i ~/.ssh/Amirhosein_West_Key.pem pixel_selector.py "$DEST/pixel_selector.py
 scp -i ~/.ssh/Amirhosein_West_Key.pem pixi.toml "$DEST/pixi.toml"
 scp -i ~/.ssh/Amirhosein_West_Key.pem README.md "$DEST/README.md"
 scp -i ~/.ssh/Amirhosein_West_Key.pem -r Samples "$DEST/Samples"
+scp -i ~/.ssh/Amirhosein_West_Key.pem -r .gitmodules "$DEST/.gitmodules"
