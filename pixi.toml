@@ -68,6 +68,8 @@ gxx = "12.4.*"
 cuda-toolkit = "12.4.*"
 cuda-runtime = "12.4.*"
 cuda-nvcc = "12.4.*"
+cuda-nvtx = "12.4.*"
+cudnn = "*"
 libgl = "*"  
 
 [tasks]
@@ -89,7 +91,7 @@ cp cache4d_multiview.py GEN3C/cosmos_predict1/diffusion/inference/
 """
 
 # Import GEN#C
-import = "cd .. && git submodule update --init --recursive GEN3C-Project/GEN3C"
+import = "git submodule update --init --recursive GEN3C"
 
 # Download GEN3C checkpoints
 download-gen3c-checkpoints = """

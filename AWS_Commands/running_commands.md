@@ -1,0 +1,13 @@
+pixi run run_render_only_image_generic -- \
+  --input_image_path Samples/00750/00750.jpg \
+  --lidar_path Samples/00750/prediction_mean_pixel_RadarTxNum5_VarTH50.npy \
+  --trajectory_generation_method action_based_movement \
+  --trajectory left \
+  --camera_rotation center_facing \
+  --movement_distance 5 \
+  --default_fx 1495.468642 \
+  --default_fy 1495.468642 \
+  --default_cx 961.272442 \
+  --default_cy 624.89592 \
+  --rendered_images_path "rendered_warp_images_00750_left.pt" \
+  --rendered_masks_path "rendered_warp_masks_00750_left.pt"

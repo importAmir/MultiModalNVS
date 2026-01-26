@@ -1,0 +1,6 @@
+[submodule "Depth-Anything-V2"]
+	path = Depth-Anything-V2
+	url = https://github.com/DepthAnything/Depth-Anything-V2.git
+[submodule "GEN3C"]
+	path = GEN3C
+	url = https://github.com/nv-tlabs/GEN3C
