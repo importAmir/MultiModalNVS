@@ -28,9 +28,10 @@ source ~/.bashrc  # or source ~/.zshrc for zsh
 pixi --version
 ```
 
-### 2. Navigate to the project directory
+### 2. Clone this repository and enter it
 ```bash
-cd GEN3C-Project
+git clone --recurse-submodules https://github.com/importAmir/radar-vision-3d-rendering.git
+cd radar-vision-3d-rendering
 ```
 
 ### 3. Install the Pixi environment
@@ -59,7 +60,7 @@ pixi run import
 ### 7. Download checkpoints
 You need a Hugging Face account and token to download the GEN3C checkpoints. Get your token from [Hugging Face Settings](https://huggingface.co/settings/tokens). Set the access token to Read permission (default is Fine-grained). 
 ```bash
-pixi run download-gen3c-checkpoints -- (Your Token)
+pixi run download-gen3c-checkpoints -- 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
 ```
 
 ### 8. Import DepthAnythingV2 submodule (Optional)
@@ -530,7 +531,7 @@ pixi run run-vggt-args -- --image_folder drone_samples/test_004 --output_folder 
 #### Step 2: Generate rendered tensors using VGGT output
 ```bash
 # Return to GEN3C project
-cd ../GEN3C-Project
+cd ../radar-vision-3d-rendering
 pixi run run_render_only_multiview_image_generic -- \
   --vggt_output_folder ../VGGT-Project/test_004_result \
   --trajectory_generation_method action_based_movement \

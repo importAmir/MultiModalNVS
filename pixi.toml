@@ -90,7 +90,7 @@ cp create_rendering_multiview_waymo_video_input.py GEN3C/cosmos_predict1/diffusi
 cp cache4d_multiview.py GEN3C/cosmos_predict1/diffusion/inference/ 
 """
 
-# Import GEN#C
+# Import GEN3C
 import = "git submodule update --init --recursive GEN3C"
 
 # Download GEN3C checkpoints
@@ -113,7 +113,7 @@ CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" scripts/download_gen3c_chec
 '
 """
 
-import-dav2 = "cd .. && git submodule update --init --recursive Depth-Estimation/Depth-Anything-V2"
+import-dav2 = "git submodule update --init --recursive Depth-Anything-V2"
 
 download-dav2-checkpoints = "mkdir -p ../Depth-Estimation/Depth-Anything-V2/checkpoints/ && wget https://huggingface.co/depth-anything/Depth-Anything-V2-Metric-Hypersim-Large/resolve/main/depth_anything_v2_metric_hypersim_vitl.pth -P ../Depth-Estimation/Depth-Anything-V2/checkpoints/"
 
