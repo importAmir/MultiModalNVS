@@ -40,3 +40,8 @@ python_plain_pod.yaml
 
 # Legacy prototype script
 radarPointCloud_prediction_pixel_circle_TrVeloToCam_Zvalue.m
+
+# Repo hygiene (local-only files)
+data.dvc
+pip_constraints.txt
+pixel_selector.py
