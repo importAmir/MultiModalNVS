@@ -1,41 +1,42 @@
-# Python cache files
-**/__pycache__/
-*.pyc
+# Python
+__pycache__/
+*.py[cod]
 
-# Output and temporary files
-dataset/
-outputs/
-rendered_tensor_dir/
-
-# DVC tracked data (managed by data.dvc)
-drone_samples/
-rendered_videos/
-*.mp4
-*.avi
-*.mov
-*.png
-*.jpg
-*.jpeg
-*.gif
-
-# Logs
-*.log
+# Logs / temp
 logs/
-
-# Temporary files
+*.log
+tmp/
+temp/
 *.tmp
 *.temp
-temp/
-tmp/
 
-# IDE files
+# IDE / OS
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS files
 .DS_Store
 Thumbs.db
-/drone_samples
-/rendered_videos
+
+# Datasets & large generated outputs (project-specific)
+view_of_delft_PUBLIC/
+GEN3C/
+outputs/
+rendered_videos/
+evaluation_results/
+mono_depth_estimation/
+
+# Large auxiliary folders (not part of core code)
+AWS_Commands/
+additional_codes/
+Plots/
+Samples/
+comparing_methods/CU-Net/
+
+# Job / cluster specs
+job_*.yaml
+jobs_*.yaml
+python_plain_pod.yaml
+
+# Legacy prototype script
+radarPointCloud_prediction_pixel_circle_TrVeloToCam_Zvalue.m
