@@ -123,8 +123,6 @@ pixi run run_evaluate_video_quality -- \
   --default_fy FY \
   --default_cx CX \
   --default_cy CY \
-  --num_video_frames NUM_FRAMES \
-  --fps FPS \
   --offload_diffusion_transformer \
   --offload_tokenizer \
   --disable_prompt_encoder \
@@ -138,8 +136,6 @@ Inputs:
 - **`--reference_images_folder`**: Folder of reference images for the sequence.
 - **`--lidar_path`**: Depth map `.npy` (shape `(H, W)`) used by the renderer. In this repo, it is produced by `predict-dense-depth`.
 - **`--default_fx/fy/cx/cy`**: Camera intrinsics (in the original image resolution; internally scaled to the target render size).
-- **`--num_video_frames`**: Number of frames to render.
-- **`--fps`**: Output video frame rate.
 
 Example (included View of Delft sample):
 
@@ -154,8 +150,6 @@ pixi run run_evaluate_video_quality -- \
   --default_fy 1495.468642 \
   --default_cx 961.272442 \
   --default_cy 624.89592 \
-  --num_video_frames 121 \
-  --fps 24 \
   --offload_diffusion_transformer \
   --offload_tokenizer \
   --disable_prompt_encoder \
