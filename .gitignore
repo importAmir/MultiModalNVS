@@ -17,6 +17,7 @@ temp/
 *.swo
 .DS_Store
 Thumbs.db
+**/.DS_Store
 
 # Datasets & large generated outputs (project-specific)
 view_of_delft_PUBLIC/
@@ -30,18 +31,6 @@ AWS_Commands/
 additional_codes/
 Plots/
 Samples/
-!Samples/
-Samples/*
-!Samples/Sequence/
-Samples/Sequence/*
-!Samples/Sequence/8350-8365/
-!Samples/Sequence/8350-8365/**
-!Samples/depth_sequence/
-Samples/depth_sequence/*
-!Samples/depth_sequence/prediction_mean_pixel_dataIdx8350_RadarTxNum1_VarTHInf_circle_radius2_TrVeloToCam_Zvalue.npy
-
-# Keep macOS metadata out of committed samples
-Samples/**/.DS_Store
 comparing_methods/CU-Net/
 
 # Job / cluster specs

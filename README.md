@@ -100,11 +100,11 @@ This command runs the full pipeline for a short sequence: it renders novel views
 
 ```bash
 pixi run run_evaluate_video_quality -- \
-  --input_image "Samples/Sequence/8350-8365/images/08350.jpg" \
-  --poses_extrinsics_dir "Samples/Sequence/8350-8365/poses" \
-  --reference_images_folder "Samples/Sequence/8350-8365/images" \
+  --input_image "examples/vod_8350-8365/images/08350.jpg" \
+  --poses_extrinsics_dir "examples/vod_8350-8365/poses" \
+  --reference_images_folder "examples/vod_8350-8365/images" \
   --output_dir "evaluation_results/depth_sequence/08350" \
-  --lidar_path "Samples/depth_sequence/prediction_mean_pixel_dataIdx8350_RadarTxNum1_VarTHInf_circle_radius2_TrVeloToCam_Zvalue.npy" \
+  --lidar_path "examples/vod_8350-8365/depth/08350_dense_depth.npy" \
   --default_fx 1495.468642 \
   --default_fy 1495.468642 \
   --default_cx 961.272442 \
@@ -119,12 +119,13 @@ pixi run run_evaluate_video_quality -- \
 
 #### Example data (View of Delft)
 
-The folder `Samples/Sequence/8350-8365/` is a small example extracted from the **View of Delft (VoD)** dataset:
-- `Samples/Sequence/8350-8365/images/08350.jpg` … `08365.jpg`
-- `Samples/Sequence/8350-8365/poses/08350.json` … `08365.json`
-- `Samples/Sequence/8350-8365/calib/08350.txt` (start-frame calibration)
-- `Samples/Sequence/8350-8365/velodyne/08350.bin` (start-frame sparse points)
-- `Samples/Sequence/8350-8365/intrinsics/08350.json` (intrinsics derived from `P2`)
+The folder `examples/vod_8350-8365/` is a small example extracted from the **View of Delft (VoD)** dataset:
+- `examples/vod_8350-8365/images/08350.jpg` … `08365.jpg`
+- `examples/vod_8350-8365/poses/08350.json` … `08365.json`
+- `examples/vod_8350-8365/calib/08350.txt` (start-frame calibration)
+- `examples/vod_8350-8365/velodyne/08350.bin` (start-frame sparse points)
+- `examples/vod_8350-8365/intrinsics/08350.json` (intrinsics derived from `P2`)
+- `examples/vod_8350-8365/depth/08350_dense_depth.npy` (dense depth for the start frame used by the command above)
 
 ## Results
 
