@@ -141,14 +141,13 @@ The folder `Samples/Sequence/8350-8365/` is a small example extracted from the *
 ```bibtex
 @ARTICLE{apalffy2022,
   author={Palffy, Andras and Pool, Ewoud and Baratam, Srimannarayana and Kooij, Julian F. P. and Gavrila, Dariu M.},
-  journal={IEEE Robotics and Automation Letters},
-  title={Multi-Class Road User Detection With 3+1D Radar in the View-of-Delft Dataset},
+  journal={IEEE Robotics and Automation Letters}, 
+  title={Multi-Class Road User Detection With 3+1D Radar in the View-of-Delft Dataset}, 
   year={2022},
   volume={7},
   number={2},
   pages={4961-4968},
-  doi={10.1109/LRA.2022.3147324}
-}
+  doi={10.1109/LRA.2022.3147324}}
 ```
 
 ### This work
