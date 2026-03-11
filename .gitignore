@@ -51,3 +51,7 @@ convert_mat_to_sparse_depth.py
 convert_sparse_depth_to_mat.py
 create_rendering_video_input.py
 create_rendering_multiview_waymo_video_input.py
+create_rendering_multiview_waymo_image_input.py
+
+# Local docs/config
+INPUT_PARAMETERS.md
