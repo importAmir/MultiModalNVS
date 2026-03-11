@@ -20,7 +20,12 @@ from pathlib import Path
 from moge.model.v1 import MoGeModel
 from cosmos_predict1.diffusion.inference.cache_3d import Cache3D_Buffer
 from cosmos_predict1.diffusion.inference.camera_utils import generate_camera_trajectory
-from cosmos_predict1.diffusion.inference.camera_sequence_generation import generate_source_to_target_trajectory, load_map_to_camera_tf_matrix, generate_pixel_focused_trajectory
+from cosmos_predict1.diffusion.inference.camera_sequence_generation import (
+    generate_source_to_target_trajectory,
+    load_map_to_camera_tf_matrix,
+    generate_pixel_focused_trajectory,
+    resample_w2c_sequence,
+)
 from cosmos_predict1.utils import log, misc
 from cosmos_predict1.diffusion.inference.gen3c_single_image import _predict_moge_depth
 
@@ -115,7 +120,7 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--trajectory_generation_method",
         type=str,
-        choices=["action_based_movement", "pixel_focusing", "source_to_target_linear_interpolation"],
+        choices=["action_based_movement", "pixel_focusing", "source_to_target_linear_interpolation", "pose_sequence"],
         required=True,
         help="Method for generating camera trajectory: action_based_movement (default), pixel_focusing, or source_to_target_linear_interpolation"
     )
@@ -167,6 +172,13 @@ def create_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Path to target metadata JSON file for source_to_target_linear_interpolation method"
+    )
+
+    parser.add_argument(
+        "--pose_sequence_path",
+        type=str,
+        default=None,
+        help="Path to a NumPy .npy file containing a sequence of world-to-camera poses with shape (T, 4, 4). Used when --trajectory_generation_method=pose_sequence.",
     )
     
     parser.add_argument(
@@ -338,8 +350,18 @@ def create_rendering(args) -> None:
         assert args.default_cx is not None
         assert args.default_cy is not None
         
-        base = Path.cwd().parent.parent
-        sys.path.insert(0, str(base / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
+        # Find repo root: script may be at repo root or in GEN3C/cosmos_predict1/diffusion/inference/
+        # Try to find Depth-Estimation directory by going up from script location
+        script_path = Path(__file__).resolve()
+        repo_root = None
+        for parent in [script_path.parent] + list(script_path.parents):
+            if (parent / "Depth-Estimation" / "Depth-Anything-V2").exists():
+                repo_root = parent
+                break
+        if repo_root is None:
+            # Fallback: assume repo root is 5 levels up from script (when in GEN3C)
+            repo_root = script_path.parent.parent.parent.parent.parent
+        sys.path.insert(0, str(repo_root / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
         # sys.path.insert(0, str(Path(__file__).parent.parent / 'Depth-Estimation' / s'Depth-Anything-V2' / 'metric_depth'))
         from depth_anything_v2.dpt import DepthAnythingV2
         model_configs = {
@@ -350,7 +372,7 @@ def create_rendering(args) -> None:
         }
         encoder = 'vitl'
         max_depth = 80
-        DepthAnythingV2_checkpoint_path = base / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
+        DepthAnythingV2_checkpoint_path = repo_root / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
         
         dav2_model = DepthAnythingV2(**{**model_configs[encoder], 'max_depth': max_depth})
         dav2_model.load_state_dict(torch.load(DepthAnythingV2_checkpoint_path, map_location=device))
@@ -497,9 +519,9 @@ def create_rendering(args) -> None:
         assert args.source_meta_path is not None
         assert args.target_meta_path is not None
         
-        with open(args.source_meta_path) as f:
+        with open(args.source_meta_path, "r", encoding="utf-8") as f:
             source_meta = json.load(f)
-        with open(args.target_meta_path) as f:
+        with open(args.target_meta_path, "r", encoding="utf-8") as f:
             target_meta = json.load(f)
         
         # Get world-to-camera poses
@@ -525,6 +547,26 @@ def create_rendering(args) -> None:
             num_frames = args.num_video_frames,
             device = device,
         )
+        generated_intrinsics = initial_cam_intrinsics_for_traj.unsqueeze(0).repeat(args.num_video_frames, 1, 1).unsqueeze(0)
+    
+    elif args.trajectory_generation_method == "pose_sequence":
+        assert args.pose_sequence_path is not None, "Provide --pose_sequence_path for pose_sequence method"
+
+        # Load external W2C sequence and resample to args.num_video_frames (default GEN3C expects 121)
+        seq_np = np.load(args.pose_sequence_path).astype(np.float32)
+        if seq_np.ndim != 3 or seq_np.shape[1:] != (4, 4):
+            raise ValueError(f"--pose_sequence_path must be (T,4,4). Got {seq_np.shape}")
+
+        seq_t = torch.from_numpy(seq_np).to(device=device, dtype=torch.float32)  # (T,4,4)
+        # Resample using existing interpolation utilities
+        seq_resampled = resample_w2c_sequence(seq_t, num_frames=args.num_video_frames, device=device)  # (T_out,4,4)
+
+        # Make the sequence relative to its first frame, then apply on top of initial pose
+        # so frame 0 matches initial_w2c (consistent with other trajectory methods).
+        seq0_inv = torch.inverse(seq_resampled[0])
+        rel_seq = torch.matmul(seq_resampled, seq0_inv)  # (T_out,4,4)
+        generated_w2cs = torch.matmul(rel_seq, initial_cam_w2c_for_traj)  # (T_out,4,4)
+        generated_w2cs = generated_w2cs.unsqueeze(0)  # (1,T_out,4,4)
         generated_intrinsics = initial_cam_intrinsics_for_traj.unsqueeze(0).repeat(args.num_video_frames, 1, 1).unsqueeze(0)
     
     else:
@@ -576,6 +618,9 @@ def main():
 
     if args.lidar_path is not None and not os.path.isabs(args.lidar_path):
         args.lidar_path = os.path.join("..", args.lidar_path)
+    
+    if args.pose_sequence_path is not None and not os.path.isabs(args.pose_sequence_path):
+        args.pose_sequence_path = os.path.join("..", args.pose_sequence_path)
 
     os.makedirs(args.rendered_tensor_dir, exist_ok=True)
     

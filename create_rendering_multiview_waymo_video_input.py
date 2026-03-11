@@ -217,8 +217,18 @@ def create_rendering(args) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Setup DepthAnythingV2 (import location mirrors image_input)
-    base = Path.cwd().parent.parent
-    sys.path.insert(0, str(base / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
+    # Find repo root: script may be at repo root or in GEN3C/cosmos_predict1/diffusion/inference/
+    # Try to find Depth-Estimation directory by going up from script location
+    script_path = Path(__file__).resolve()
+    repo_root = None
+    for parent in [script_path.parent] + list(script_path.parents):
+        if (parent / "Depth-Estimation" / "Depth-Anything-V2").exists():
+            repo_root = parent
+            break
+    if repo_root is None:
+        # Fallback: assume repo root is 5 levels up from script (when in GEN3C)
+        repo_root = script_path.parent.parent.parent.parent.parent
+    sys.path.insert(0, str(repo_root / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
     from depth_anything_v2.dpt import DepthAnythingV2  # type: ignore
     
     model_configs = {
@@ -229,7 +239,7 @@ def create_rendering(args) -> None:
     }
     encoder = 'vitl'
     max_depth = 80
-    DepthAnythingV2_checkpoint_path = base / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
+    DepthAnythingV2_checkpoint_path = repo_root / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
     
     dav2_model = DepthAnythingV2(**{**model_configs[encoder], 'max_depth': max_depth})
     dav2_model.load_state_dict(torch.load(DepthAnythingV2_checkpoint_path, map_location=device))

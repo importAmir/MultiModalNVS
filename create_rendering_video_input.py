@@ -13,7 +13,14 @@ import argparse
 
 from cosmos_predict1.diffusion.inference.cache_3d import Cache4D
 from cosmos_predict1.diffusion.inference.camera_utils import generate_camera_trajectory
-from cosmos_predict1.diffusion.inference.camera_sequence_generation import generate_source_to_target_trajectory, load_map_to_camera_tf_matrix, generate_pixel_focused_trajectory, plot_camera_trajectory_comparison, plot_depth_statistics
+from cosmos_predict1.diffusion.inference.camera_sequence_generation import (
+    generate_source_to_target_trajectory,
+    load_map_to_camera_tf_matrix,
+    generate_pixel_focused_trajectory,
+    plot_camera_trajectory_comparison,
+    plot_depth_statistics,
+    resample_w2c_sequence,
+)
 from cosmos_predict1.utils import log, misc
 from cosmos_predict1.diffusion.inference.inference_utils import (
     add_common_arguments,
@@ -109,9 +116,9 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--trajectory_generation_method",
         type=str,
-        choices=["action_based_movement", "pixel_focusing", "source_to_target_linear_interpolation", "target_folder_trajectory"],
+        choices=["action_based_movement", "pixel_focusing", "source_to_target_linear_interpolation", "target_folder_trajectory", "pose_sequence"],
         required=True,
-        help="Method for generating camera trajectory: action_based_movement (default), pixel_focusing, source_to_target_linear_interpolation, or target_folder_trajectory"
+        help="Method for generating camera trajectory: action_based_movement (default), pixel_focusing, source_to_target_linear_interpolation, target_folder_trajectory, or pose_sequence"
     )
     
     parser.add_argument(
@@ -189,6 +196,13 @@ def create_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="Optional: path to a NumPy .npy file containing a 4x4 world-to-camera pose for the target view. If provided along with --source_pose_path, these will be used instead of metadata."
+    )
+
+    parser.add_argument(
+        "--pose_sequence_path",
+        type=str,
+        default=None,
+        help="Path to a NumPy .npy file containing a sequence of world-to-camera poses with shape (T, 4, 4). Used when --trajectory_generation_method=pose_sequence.",
     )
 
     parser.add_argument(
@@ -332,8 +346,18 @@ def create_rendering(args):
         assert args.default_cx is not None
         assert args.default_cy is not None
 
-    base = Path.cwd().parent.parent
-    sys.path.insert(0, str(base / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
+    # Find repo root: script may be at repo root or in GEN3C/cosmos_predict1/diffusion/inference/
+    # Try to find Depth-Estimation directory by going up from script location
+    script_path = Path(__file__).resolve()
+    repo_root = None
+    for parent in [script_path.parent] + list(script_path.parents):
+        if (parent / "Depth-Estimation" / "Depth-Anything-V2").exists():
+            repo_root = parent
+            break
+    if repo_root is None:
+        # Fallback: assume repo root is 5 levels up from script (when in GEN3C)
+        repo_root = script_path.parent.parent.parent.parent.parent
+    sys.path.insert(0, str(repo_root / "Depth-Estimation" / "Depth-Anything-V2" / "metric_depth"))
     
     from depth_anything_v2.dpt import DepthAnythingV2
     
@@ -345,7 +369,7 @@ def create_rendering(args):
     }
     encoder = 'vitl'
     max_depth = 80
-    DepthAnythingV2_checkpoint_path = base / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
+    DepthAnythingV2_checkpoint_path = repo_root / 'Depth-Estimation' / 'Depth-Anything-V2' / 'checkpoints' / f'depth_anything_v2_metric_hypersim_{encoder}.pth'
     
     dav2_model = DepthAnythingV2(**{**model_configs[encoder], 'max_depth': max_depth})
     dav2_model.load_state_dict(torch.load(DepthAnythingV2_checkpoint_path, map_location=device))
@@ -772,6 +796,23 @@ def create_rendering(args):
         generated_w2cs = torch.stack(generated_w2cs, dim=0).unsqueeze(0).to(device)
         generated_intrinsics = initial_cam_intrinsics_for_traj.unsqueeze(0).to(device)
 
+    elif args.trajectory_generation_method == "pose_sequence":
+        assert args.pose_sequence_path is not None, "Provide --pose_sequence_path for pose_sequence method"
+
+        seq_np = np.load(args.pose_sequence_path).astype(np.float32)
+        if seq_np.ndim != 3 or seq_np.shape[1:] != (4, 4):
+            raise ValueError(f"--pose_sequence_path must be (T,4,4). Got {seq_np.shape}")
+
+        seq_t = torch.from_numpy(seq_np).to(device=device, dtype=torch.float32)  # (Tin,4,4)
+        seq_resampled = resample_w2c_sequence(seq_t, num_frames=args.num_video_frames, device=device)  # (T,4,4)
+
+        # Make relative to first frame, then apply on top of the input's first pose
+        seq0_inv = torch.inverse(seq_resampled[0])
+        rel_seq = torch.matmul(seq_resampled, seq0_inv)
+        base_w2c0 = initial_cam_w2c_for_traj[0] if initial_cam_w2c_for_traj.dim() == 3 else initial_cam_w2c_for_traj
+        generated_w2cs = torch.matmul(rel_seq, base_w2c0).unsqueeze(0)  # (1,T,4,4)
+        generated_intrinsics = initial_cam_intrinsics_for_traj[0].unsqueeze(0) if initial_cam_intrinsics_for_traj.dim() == 3 else initial_cam_intrinsics_for_traj.unsqueeze(0)
+
     else:
         raise ValueError(f"Invalid trajectory generation method: {args.trajectory_generation_method}")
     
@@ -831,6 +872,9 @@ def main():
     
     if args.waypo_path is not None and not os.path.isabs(args.waypo_path):
         args.waypo_path = os.path.join("..", args.waypo_path)
+
+    if args.pose_sequence_path is not None and not os.path.isabs(args.pose_sequence_path):
+        args.pose_sequence_path = os.path.join("..", args.pose_sequence_path)
 
     if args.source_meta_path is not None and not os.path.isabs(args.source_meta_path):
         args.source_meta_path = os.path.join("..", args.source_meta_path)

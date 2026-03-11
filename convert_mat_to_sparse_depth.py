@@ -133,68 +133,60 @@ def convert_to_sparse_depth(arr: np.ndarray, invalid_value: float) -> np.ndarray
     return out
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--mat_path", required=True, help="Path to input .mat file")
-    ap.add_argument(
-        "--var_name",
-        default=None,
-        help="MATLAB variable name to extract (optional; otherwise auto-detect a good candidate).",
-    )
-    ap.add_argument(
-        "--invalid_value",
-        type=float,
-        default=-1.0,
-        help="Value to write for invalid pixels (non-positive, NaN, inf). Default: -1.",
-    )
-    ap.add_argument(
-        "--out_path",
-        default=None,
-        help="Optional explicit output .npy path. Default: same basename as input with .npy extension.",
-    )
-    args = ap.parse_args()
+def process_single_mat_file(
+    mat_path: str,
+    var_name: Optional[str] = None,
+    invalid_value: float = -1.0,
+    out_path: Optional[str] = None,
+) -> tuple[int, float]:
+    """
+    Process a single .mat file and convert it to sparse depth .npy.
+    
+    Returns:
+        Tuple of (exit_code, sparsity_percent):
+        - exit_code: 0 on success, non-zero on error
+        - sparsity_percent: Percentage of invalid pixels (0.0 if error)
+    """
+    mat_path_expanded = os.path.expanduser(mat_path)
+    if not os.path.exists(mat_path_expanded):
+        print(f"ERROR: file not found: {mat_path_expanded}")
+        return 2, 0.0
 
-    mat_path = os.path.expanduser(args.mat_path)
-    if not os.path.exists(mat_path):
-        print(f"ERROR: file not found: {mat_path}")
-        return 2
-
-    out_path = args.out_path
     if out_path is None:
-        base, _ext = os.path.splitext(mat_path)
+        base, _ext = os.path.splitext(mat_path_expanded)
         out_path = base + ".npy"
     out_path = os.path.expanduser(out_path)
 
-    d = _load_v5_mat(mat_path)
+    d = _load_v5_mat(mat_path_expanded)
     h5_file = None
     candidates: List[Tuple[str, np.ndarray]]
     if d is not None:
         candidates = list(_iter_named_arrays_from_loadmat(d))
     else:
-        loaded = _load_v73_hdf5(mat_path)
+        loaded = _load_v73_hdf5(mat_path_expanded)
         if loaded is None:
             print(
-                "ERROR: Could not load .mat file.\n"
+                f"ERROR: Could not load .mat file: {mat_path_expanded}\n"
                 "Install dependencies and retry:\n"
                 "  pip install scipy h5py"
             )
-            return 3
+            return 3, 0.0
         h5_file, root = loaded
         candidates = list(_iter_named_arrays_from_h5(root))
 
     try:
-        if args.var_name:
-            name, arr = _find_by_var_name(candidates, args.var_name)
+        if var_name:
+            name, arr = _find_by_var_name(candidates, var_name)
         else:
             name, arr = _choose_default_var(candidates)
     except ValueError as e:
-        print(f"ERROR selecting array: {e}")
+        print(f"ERROR selecting array from {mat_path_expanded}: {e}")
         if h5_file is not None:
             try:
                 h5_file.close()
             except OSError:
                 pass
-        return 4
+        return 4, 0.0
 
     if not _is_numeric_ndarray(arr):
         print(f"ERROR: selected '{name}' but it is not a numeric ndarray (dtype={getattr(arr, 'dtype', None)})")
@@ -203,22 +195,30 @@ def main() -> int:
                 h5_file.close()
             except OSError:
                 pass
-        return 5
+        return 5, 0.0
 
-    depth = convert_to_sparse_depth(arr, invalid_value=args.invalid_value)
+    depth = convert_to_sparse_depth(arr, invalid_value=invalid_value)
     np.save(out_path, depth)
 
     # Print quick sanity stats
     finite = np.isfinite(depth)
     valid = finite & (depth > 0)
     invalid = ~valid
-    print(f"Loaded: {mat_path}")
+    total_pixels = depth.size
+    invalid_count = int(np.sum(invalid))
+    valid_count = int(np.sum(valid))
+    sparsity_percent = float(np.mean(invalid)) * 100.0
+    
+    print(f"Loaded: {mat_path_expanded}")
     print(f"Selected variable: {name}")
     print(f"Input shape: {arr.shape} dtype: {arr.dtype}")
     print(f"Output: {out_path}")
     print(f"Output shape: {depth.shape} dtype: {depth.dtype}")
+    print(f"Valid pixels: {valid_count}/{total_pixels} ({100.0 - sparsity_percent:.2f}%)")
+    print(f"Invalid pixels: {invalid_count}/{total_pixels} ({sparsity_percent:.2f}%)")
+    print(f"Sparsity: {sparsity_percent:.2f}%")
     print(f"valid_frac (depth>0): {float(np.mean(valid)):.6f}")
-    print(f"invalid_frac: {float(np.mean(invalid)):.6f}  (invalid_value={args.invalid_value})")
+    print(f"invalid_frac: {float(np.mean(invalid)):.6f}  (invalid_value={invalid_value})")
     if np.any(valid):
         vals = depth[valid].astype(np.float64, copy=False)
         qs = np.quantile(vals, [0.01, 0.1, 0.5, 0.9, 0.99])
@@ -233,7 +233,89 @@ def main() -> int:
             h5_file.close()
         except OSError:
             pass
-    return 0
+    return 0, sparsity_percent  # Return sparsity for averaging
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mat_path", required=True, help="Path to input .mat file or folder containing .mat files")
+    ap.add_argument(
+        "--var_name",
+        default=None,
+        help="MATLAB variable name to extract (optional; otherwise auto-detect a good candidate).",
+    )
+    ap.add_argument(
+        "--invalid_value",
+        type=float,
+        default=-1.0,
+        help="Value to write for invalid pixels (non-positive, NaN, inf). Default: -1.",
+    )
+    ap.add_argument(
+        "--out_path",
+        default=None,
+        help="Optional explicit output .npy path (only used for single file input). Default: same basename as input with .npy extension.",
+    )
+    args = ap.parse_args()
+
+    input_path = os.path.expanduser(args.mat_path)
+    if not os.path.exists(input_path):
+        print(f"ERROR: path not found: {input_path}")
+        return 2
+
+    # Check if input is a file or folder
+    if os.path.isfile(input_path):
+        # Single file processing
+        result, sparsity = process_single_mat_file(
+            input_path,
+            var_name=args.var_name,
+            invalid_value=args.invalid_value,
+            out_path=args.out_path,
+        )
+        return result
+    elif os.path.isdir(input_path):
+        # Folder processing: find all .mat files
+        from pathlib import Path
+        folder_path = Path(input_path)
+        mat_files = sorted(folder_path.glob("*.mat"))
+        
+        if len(mat_files) == 0:
+            print(f"ERROR: No .mat files found in folder: {input_path}")
+            return 2
+        
+        print(f"Found {len(mat_files)} .mat files in {input_path}")
+        print("=" * 80)
+        
+        successful = 0
+        failed = 0
+        sparsity_values = []
+        
+        for mat_file in mat_files:
+            print(f"\nProcessing: {mat_file.name}")
+            print("-" * 80)
+            result, sparsity = process_single_mat_file(
+                str(mat_file),
+                var_name=args.var_name,
+                invalid_value=args.invalid_value,
+                out_path=None,  # Always use default output path (next to .mat file)
+            )
+            if result == 0:
+                successful += 1
+                sparsity_values.append(sparsity)
+            else:
+                failed += 1
+                print(f"✗ Failed to process {mat_file.name}")
+        
+        print("\n" + "=" * 80)
+        print(f"Summary: {successful} successful, {failed} failed")
+        if len(sparsity_values) > 0:
+            avg_sparsity = sum(sparsity_values) / len(sparsity_values)
+            print(f"Average sparsity: {avg_sparsity:.2f}%")
+        print("=" * 80)
+        
+        return 0 if failed == 0 else 1
+    else:
+        print(f"ERROR: path is neither a file nor a directory: {input_path}")
+        return 2
 
 
 if __name__ == "__main__":

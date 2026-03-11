@@ -10,6 +10,104 @@ from typing import Optional, Tuple
 import numpy as np
 import json
 
+def resample_w2c_sequence(
+    w2c_seq: torch.Tensor,
+    num_frames: int,
+    device: str | torch.device = "cuda",
+) -> torch.Tensor:
+    """
+    Resample a sequence of world-to-camera (w2c) poses to a target length.
+
+    - If len(w2c_seq) < num_frames: piecewise interpolation between consecutive poses
+      using the existing `generate_source_to_target_trajectory` (SLERP for rotation + linear
+      interpolation of camera center).
+    - If len(w2c_seq) > num_frames: uniform subsampling.
+    - If equal: return as-is.
+
+    Args:
+        w2c_seq: Tensor of shape (T, 4, 4)
+        num_frames: desired output length
+        device: torch device
+
+    Returns:
+        Tensor of shape (num_frames, 4, 4)
+    """
+    if isinstance(device, str):
+        device = torch.device(device)
+
+    if w2c_seq.dim() != 3 or w2c_seq.shape[1:] != (4, 4):
+        raise ValueError(f"w2c_seq must have shape (T,4,4). Got {tuple(w2c_seq.shape)}")
+
+    T_in = int(w2c_seq.shape[0])
+    if T_in <= 0:
+        raise ValueError("w2c_seq must have at least 1 frame")
+    if num_frames <= 0:
+        raise ValueError("num_frames must be > 0")
+
+    w2c_seq = w2c_seq.to(device=device, dtype=torch.float32)
+
+    if T_in == num_frames:
+        return w2c_seq
+
+    if T_in == 1:
+        # Repeat the single pose
+        return w2c_seq.repeat(num_frames, 1, 1)
+
+    if T_in > num_frames:
+        # Uniform subsampling (keep endpoints)
+        idx = torch.linspace(0, T_in - 1, steps=num_frames, device=device)
+        idx = torch.round(idx).to(torch.long)
+        # enforce monotonic non-decreasing
+        idx = torch.maximum(idx, torch.arange(num_frames, device=device) * 0)  # no-op but keeps shape
+        idx[0] = 0
+        idx[-1] = T_in - 1
+        # fix any potential non-monotonicity caused by rounding
+        idx = torch.minimum(idx, torch.tensor(T_in - 1, device=device, dtype=idx.dtype))
+        for i in range(1, num_frames):
+            if idx[i] < idx[i - 1]:
+                idx[i] = idx[i - 1]
+        return w2c_seq[idx]
+
+    # T_in < num_frames: piecewise interpolation over segments
+    segments = T_in - 1
+    total_steps = num_frames - 1  # steps between frames
+
+    base = total_steps // segments
+    rem = total_steps % segments
+
+    out_chunks = []
+    for s in range(segments):
+        # frames for this segment, including the starting frame
+        steps_s = base + (1 if s < rem else 0)
+        frames_s = steps_s + 1
+
+        source = w2c_seq[s]
+        target = w2c_seq[s + 1]
+
+        # Pure interpolation from source->target over frames_s frames
+        chunk_b1 = generate_source_to_target_trajectory(
+            source_w2c=source,
+            target_w2c=target,
+            num_frames=frames_s,
+            start_transition_frames=0,
+            end_transition_frames=frames_s - 1,
+            device=device,
+        )  # (1, frames_s, 4, 4)
+        chunk = chunk_b1[0]
+
+        # Avoid duplicating the first frame for all but the first segment
+        if s > 0:
+            chunk = chunk[1:]
+        out_chunks.append(chunk)
+
+    out = torch.cat(out_chunks, dim=0)
+    # Safety: trim/pad if off by 1 due to integer math (shouldn't happen, but keep robust)
+    if out.shape[0] > num_frames:
+        out = out[:num_frames]
+    elif out.shape[0] < num_frames:
+        out = torch.cat([out, out[-1:].repeat(num_frames - out.shape[0], 1, 1)], dim=0)
+    return out
+
 
 def load_drone_to_map_frame_tf_matrix(meta_data_file_path):
     """
@@ -22,10 +120,12 @@ def load_drone_to_map_frame_tf_matrix(meta_data_file_path):
         np.ndarray: 4x4 transformation matrix from the drone frame to the map frame.
     """
     
-    with open(meta_data_file_path, 'r') as file:
+    with open(meta_data_file_path, "r", encoding="utf-8") as file:
         meta_data = json.load(file)
 
     # Extract translation and rotation
+    translation = None
+    rotation = None
     if "Frame Transformations" in meta_data:
         if "drone_1/base_link" in meta_data["Frame Transformations"]['map']:
             translation = meta_data["Frame Transformations"]["map"]["drone_1/base_link"]["translation"]
@@ -36,6 +136,12 @@ def load_drone_to_map_frame_tf_matrix(meta_data_file_path):
     elif "local_pose" in meta_data:
         translation = meta_data["local_pose"]["position"]
         rotation = meta_data["local_pose"]["orientation"]
+
+    if translation is None or rotation is None:
+        raise KeyError(
+            f"Could not find pose translation/rotation in metadata: {meta_data_file_path}. "
+            "Expected either ['Frame Transformations']['map'][drone_*/base_link] or ['local_pose']."
+        )
 
     # Create translation vector
     translation_vector = np.array([translation["x"], translation["y"], translation["z"]])
@@ -63,10 +169,12 @@ def load_map_to_drone_frame_tf_matrix(meta_data_file_path):
     Returns:
         np.ndarray: 4x4 transformation matrix from the map frame to the drone frame.
     """
-    with open(meta_data_file_path, 'r') as file:
+    with open(meta_data_file_path, "r", encoding="utf-8") as file:
         meta_data = json.load(file)
 
     # Extract translation and rotation
+    translation = None
+    rotation = None
     if "Frame Transformations" in meta_data:        
         if "drone_1/base_link" in meta_data["Frame Transformations"]['map']:
             translation = meta_data["Frame Transformations"]["map"]["drone_1/base_link"]["translation"]
@@ -77,6 +185,12 @@ def load_map_to_drone_frame_tf_matrix(meta_data_file_path):
     elif "local_pose" in meta_data:
         translation = meta_data["local_pose"]["position"]
         rotation = meta_data["local_pose"]["orientation"]
+
+    if translation is None or rotation is None:
+        raise KeyError(
+            f"Could not find pose translation/rotation in metadata: {meta_data_file_path}. "
+            "Expected either ['Frame Transformations']['map'][drone_*/base_link] or ['local_pose']."
+        )
 
     
     # Create translation vector
@@ -107,7 +221,7 @@ def load_camera_to_drone_frame_tf_matrix(meta_data_file_path, camera_angle=(0,0,
     
     if meta_data_file_path:
         try:
-            with open(meta_data_file_path, 'r') as file:
+            with open(meta_data_file_path, "r", encoding="utf-8") as file:
                 meta_data = json.load(file)
                 if "gimbal_angles" in meta_data:        
                     x_pitch = meta_data["gimbal_angles"]['pitch']
@@ -115,9 +229,9 @@ def load_camera_to_drone_frame_tf_matrix(meta_data_file_path, camera_angle=(0,0,
                     z_roll = meta_data["gimbal_angles"]['roll']
                     print("Loaded camera angles from metadata!")
                 else:
-                    print(f"Warning: there is no camera_angle info in metadata '{meta_data_file_path}': {e} - will use camera_angle if provided")
+                    print(f"Warning: there is no camera_angle info in metadata '{meta_data_file_path}' - will use camera_angle if provided")
                     x_pitch, y_yaw, z_roll = camera_angle if camera_angle is not None else (0, 0, 0)        
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, KeyError) as e:
             print(f"Warning: Failed to open metadata file '{meta_data_file_path}': {e} - will use camera_angles if provided")
             x_pitch, y_yaw, z_roll = camera_angle if camera_angle is not None else (0, 0, 0)
     elif camera_angle is not None:
