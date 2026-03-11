@@ -83,7 +83,7 @@ pixi run predict-dense-depth -- \
   --points-bin /path/to/points.bin \
   --calib-txt /path/to/calib.txt \
   --image-size H W \
-  --output /path/to/output_depth.npz
+  --output /path/to/output_depth.npy
 ```
 
 Inputs:
@@ -92,7 +92,9 @@ Inputs:
   `x, y, z, RCS, v_r, v_r_comp, t_id`.
 - **`--calib-txt`**: KITTI-style calibration text file that contains `Tr_velo_to_cam:` (3×4 extrinsic) and `P2:` (3×4 projection; used for intrinsics).
 - **`--image-size H W`**: Dense depth output resolution.
-- **`--output`**: Output `.npz` file. The saved file contains arrays `depth`, `variance`, and `valid`.
+- **`--output`**: Output depth `.npy` file. Two additional sidecar files are saved alongside:
+  - `*_variance.npy`
+  - `*_valid.npy`
 
 Example (included View of Delft sample):
 
@@ -101,19 +103,7 @@ pixi run predict-dense-depth -- \
   --points-bin "examples/vod_8350-8365/velodyne/08350.bin" \
   --calib-txt "examples/vod_8350-8365/calib/08350.txt" \
   --image-size 1248 1920 \
-  --output "examples/vod_8350-8365/depth/08350_pred_depth.npz"
-```
-
-Convert the predicted depth to a `.npy` depth map (so it can be consumed by the rendering pipeline below):
-
-```bash
-python - <<'PY'
-import numpy as np
-npz = np.load("examples/vod_8350-8365/depth/08350_pred_depth.npz")
-depth = npz["depth"].astype(np.float32)
-np.save("examples/vod_8350-8365/depth/08350_pred_depth.npy", depth)
-print("Saved:", "examples/vod_8350-8365/depth/08350_pred_depth.npy", depth.shape, depth.dtype)
-PY
+  --output "examples/vod_8350-8365/depth/08350_pred_depth.npy"
 ```
 
 ### Rendering pipeline

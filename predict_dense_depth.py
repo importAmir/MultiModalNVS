@@ -825,6 +825,17 @@ def merge_shards(
     return 0
 
 
+def _sidecar_output_paths(depth_output_npy: Path) -> tuple[Path, Path, Path]:
+    """
+    Given a depth output path (typically *_depth.npy), derive sidecar paths.
+    """
+    if depth_output_npy.suffix.lower() != ".npy":
+        depth_output_npy = depth_output_npy.with_suffix(".npy")
+    var_path = depth_output_npy.with_name(depth_output_npy.stem + "_variance.npy")
+    valid_path = depth_output_npy.with_name(depth_output_npy.stem + "_valid.npy")
+    return depth_output_npy, var_path, valid_path
+
+
 def main(argv: Optional[Iterable[str]] = None) -> int:
     p = argparse.ArgumentParser(description="Predict dense depth from a sparse point cloud (fast, sharded, optional GPU).")
 
@@ -905,7 +916,15 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     p.add_argument("--num-workers", type=int, default=default_workers, help="Worker threads per shard (0 = single-thread).")
 
     # Output.
-    p.add_argument("--output", type=str, default=None, help="Output .npz path (default: derived from input).")
+    p.add_argument(
+        "--output",
+        type=str,
+        default=None,
+        help=(
+            "Output depth .npy path (variance/valid are saved alongside as *_variance.npy and *_valid.npy). "
+            "For sharded runs (--num-shards > 1), this is a shard .npz path."
+        ),
+    )
     p.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bars.")
 
     # Merge mode.
@@ -944,25 +963,36 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     if args.output is None:
         stem = points_path.stem
         shard_suffix = f".shard{int(args.shard_rank):03d}of{int(args.num_shards):03d}" if int(args.num_shards) > 1 else ""
+        if int(args.num_shards) > 1:
+            out_ext = f"{shard_suffix}.npz"
+        else:
+            out_ext = "_depth.npy"
         if args.prediction_model == "local_gp_mle":
             out_name = (
                 f"depth_pred_{stem}_model-local_gp_mle_mode-{args.depth_mode}"
                 f"_r{args.locality_radius_deg:g}_a{args.gaussian_std:g}_sig{args.sigma_mismatch:g}"
-                f"_stride{args.stride}{shard_suffix}.npz"
+                f"_stride{args.stride}{out_ext}"
             )
         else:
             out_name = (
                 f"depth_pred_{stem}_model-kernel_mode-{args.depth_mode}"
                 f"_r{args.locality_radius_deg:g}_ls{args.kernel_length_scale_deg:g}"
-                f"_stride{args.stride}{shard_suffix}.npz"
+                f"_stride{args.stride}{out_ext}"
             )
         out_path = points_path.parent / out_name
     else:
         out_path = Path(args.output)
         if int(args.num_shards) > 1:
+            # Sharded outputs stay as .npz with shard suffix.
+            if out_path.suffix.lower() != ".npz":
+                out_path = out_path.with_suffix(".npz")
             shard_suffix = f".shard{int(args.shard_rank):03d}of{int(args.num_shards):03d}"
             if shard_suffix not in out_path.name:
                 out_path = out_path.with_name(out_path.stem + shard_suffix + out_path.suffix)
+        else:
+            # Non-sharded dense outputs are .npy (depth), with sidecars.
+            if out_path.suffix.lower() != ".npy":
+                out_path = out_path.with_suffix(".npy")
 
     pts = load_sparse_points_bin(points_path, points_format=args.points_format)
     Tr = load_tr_velo_to_cam(calib_path)
@@ -1089,34 +1119,15 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     var_map = pred_var.reshape(hw_eff)
     valid_map = valid.reshape(hw_eff)
 
-    np.savez_compressed(
-        out_path,
-        depth=depth_map.astype(np.float32),
-        variance=var_map.astype(np.float32),
-        valid=valid_map,
-        hw_eff=np.array(hw_eff, dtype=np.int32),
-        intrinsics=np.array([K.fx, K.fy, K.cx, K.cy], dtype=np.float32),
-        Tr_sensor_to_cam=Tr.astype(np.float64),
-        prediction_model=np.array(str(args.prediction_model)),
-        params=np.array([args.locality_radius_deg, shift_depth_value, float(args.stride)], dtype=np.float32),
-        kernel_params=np.array([args.kernel_length_scale_deg], dtype=np.float32),
-        gp_params=np.array(
-            [
-                args.gaussian_std,
-                args.sigma_mismatch,
-                args.length_scale_min,
-                args.length_scale_max,
-                args.gp_opt_tol,
-                float(args.gp_opt_max_iter),
-            ],
-            dtype=np.float32,
-        ),
-        source_points=np.array(str(points_path)),
-        source_calib=np.array(str(calib_path)),
-        points_format=np.array(str(args.points_format)),
-    )
+    depth_path, var_path, valid_path = _sidecar_output_paths(out_path)
+    np.save(depth_path, depth_map.astype(np.float32, copy=False))
+    np.save(var_path, var_map.astype(np.float32, copy=False))
+    # Save valid as uint8 for compactness/compatibility (0/1).
+    np.save(valid_path, valid_map.astype(np.uint8, copy=False))
 
-    print(f"Saved: {out_path}")
+    print(f"Saved depth: {depth_path}")
+    print(f"Saved variance: {var_path}")
+    print(f"Saved valid: {valid_path}")
     print(f"Output shape: {depth_map.shape} (stride={args.stride}, original image={h}x{w})")
     print(f"Valid pixels: {int(valid_map.sum())} / {valid_map.size}")
     return 0
