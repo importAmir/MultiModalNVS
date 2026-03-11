@@ -83,6 +83,17 @@ pixi run predict-dense-depth -- \
   --image-size 1248 1920
 ```
 
+#### Input format (View of Delft example)
+
+- **`--points-bin`**: A binary file of `float32` values.
+  - View of Delft radar format (default `--points-format vod7`): shape `(N, 7)` with columns
+    `x, y, z, RCS, v_r, v_r_comp, t_id`.
+  - Example path: `view_of_delft_PUBLIC/radar/training/velodyne/00000.bin`
+- **`--calib-txt`**: A KITTI-style calibration text file that contains:
+  - `Tr_velo_to_cam:` (12 numbers forming a 3×4 extrinsic matrix)
+  - `P2:` (3×4 projection matrix; intrinsics are read from this by default)
+  - Example path: `view_of_delft_PUBLIC/radar/training/calib/00000.txt`
+
 ### Rendering
 
 Rendering uses the predicted depth to produce warps/masks for a target camera trajectory.
