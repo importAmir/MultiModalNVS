@@ -89,10 +89,6 @@ cp diffusion_only.py GEN3C/cosmos_predict1/diffusion/inference/ &&
 cp create_rendering_image_input.py GEN3C/cosmos_predict1/diffusion/inference/ &&
 cp camera_sequence_generation.py GEN3C/cosmos_predict1/diffusion/inference/ &&
 cp generate_rendering_video.py GEN3C/cosmos_predict1/diffusion/inference/ &&
-cp create_rendering_video_input.py GEN3C/cosmos_predict1/diffusion/inference/ &&
-cp create_rendering_multiview_waymo_image_input.py GEN3C/cosmos_predict1/diffusion/inference/ &&
-cp create_rendering_multiview_waymo_video_input.py GEN3C/cosmos_predict1/diffusion/inference/ &&
-cp cache4d_multiview.py GEN3C/cosmos_predict1/diffusion/inference/ &&
 cp evaluate_video_quality.py GEN3C/cosmos_predict1/diffusion/inference/ &&
 cp video_metrics.py GEN3C/cosmos_predict1/diffusion/inference/
 """
