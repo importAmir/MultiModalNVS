@@ -20,7 +20,6 @@ Thumbs.db
 
 # Datasets & large generated outputs (project-specific)
 view_of_delft_PUBLIC/
-GEN3C/
 outputs/
 rendered_videos/
 evaluation_results/
