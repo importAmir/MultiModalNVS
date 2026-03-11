@@ -108,7 +108,40 @@ pixi run predict-dense-depth -- \
 
 ### Rendering pipeline
 
-After you generate `examples/vod_8350-8365/depth/08350_pred_depth.npy` in the step above, run the full pipeline for a short sequence. It renders novel views from a reference image + poses using the depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
+After you generate a dense depth map (e.g. `depth.npy`) in the step above, run the full pipeline for a short sequence. It renders novel views from a reference image + poses using the depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
+
+Main command:
+
+```bash
+pixi run run_evaluate_video_quality -- \
+  --input_image /path/to/reference_image.jpg \
+  --poses_extrinsics_dir /path/to/poses_json_dir \
+  --reference_images_folder /path/to/reference_images_folder \
+  --output_dir /path/to/output_dir \
+  --lidar_path /path/to/depth.npy \
+  --default_fx FX \
+  --default_fy FY \
+  --default_cx CX \
+  --default_cy CY \
+  --num_video_frames NUM_FRAMES \
+  --fps FPS \
+  --offload_diffusion_transformer \
+  --offload_tokenizer \
+  --disable_prompt_encoder \
+  --save_buffer
+```
+
+Inputs:
+
+- **`--input_image`**: Reference image (frame 0) used to start the sequence.
+- **`--poses_extrinsics_dir`**: Folder of per-frame camera extrinsics (one JSON per frame).
+- **`--reference_images_folder`**: Folder of reference images for the sequence.
+- **`--lidar_path`**: Depth map `.npy` (shape `(H, W)`) used by the renderer. In this repo, it is produced by `predict-dense-depth`.
+- **`--default_fx/fy/cx/cy`**: Camera intrinsics (in the original image resolution; internally scaled to the target render size).
+- **`--num_video_frames`**: Number of frames to render.
+- **`--fps`**: Output video frame rate.
+
+Example (included View of Delft sample):
 
 ```bash
 pixi run run_evaluate_video_quality -- \
@@ -127,25 +160,6 @@ pixi run run_evaluate_video_quality -- \
   --offload_tokenizer \
   --disable_prompt_encoder \
   --save_buffer
-```
-
-#### Example data (View of Delft)
-
-The repo includes a small example under `examples/vod_8350-8365/` (derived from **View of Delft (VoD)**):
-
-```bash
-EX="examples/vod_8350-8365"
-
-ls -1 "$EX/images/" | head
-ls -1 "$EX/poses/"  | head
-
-ls -lh \
-  "$EX/images/08350.jpg" \
-  "$EX/poses/08350.json" \
-  "$EX/calib/08350.txt" \
-  "$EX/velodyne/08350.bin" \
-  "$EX/intrinsics/08350.json" \
-  "$EX/depth/08350_dense_depth.npy"
 ```
 
 ## Results
