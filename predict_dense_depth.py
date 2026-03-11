@@ -450,6 +450,7 @@ def predict_depth_kernel_circle_binned_sparse(
         idx, mean, var = process_keys(_progress(keys_list, total=len(keys_list), desc="Kernel keys", enable=show_progress))
     else:
         num_workers = int(num_workers)
+        print(f"[parallel] Kernel: using {num_workers} worker threads for {len(keys_list)} keys")
         chunk = max(1, len(keys_list) // (num_workers * 8))
         chunks = [keys_list[i : i + chunk] for i in range(0, len(keys_list), chunk)]
         pbar = tqdm(total=len(keys_list), desc="Kernel keys") if (show_progress and tqdm is not None) else None
@@ -751,6 +752,7 @@ def predict_depth_local_gp_mle_binned_sparse(
         idx, mean, var = process_keys(_progress(keys_list, total=len(keys_list), desc="GP keys", enable=show_progress))
     else:
         num_workers = int(num_workers)
+        print(f"[parallel] GP MLE: using {num_workers} worker threads for {len(keys_list)} keys")
         chunk = max(1, len(keys_list) // (num_workers * 8))
         chunks = [keys_list[i : i + chunk] for i in range(0, len(keys_list), chunk)]
         pbar = tqdm(total=len(keys_list), desc="GP keys") if (show_progress and tqdm is not None) else None
@@ -1025,6 +1027,13 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
     if h <= 0 or w <= 0:
         raise SystemExit("--image-size must be positive: H W")
     target_az, target_el, hw_eff = pixel_angles_from_intrinsics((h, w), K, stride=args.stride)
+
+    cpu_count = os.cpu_count() or 8
+    nw = int(args.num_workers)
+    if nw <= 0:
+        print(f"[parallel] CPUs available: {cpu_count} | workers: 0 (single-threaded)")
+    else:
+        print(f"[parallel] CPUs available: {cpu_count} | workers: {nw} (parallel)")
 
     if args.prediction_model == "local_gp_mle":
         if args.backend == "torch":

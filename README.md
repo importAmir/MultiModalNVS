@@ -102,7 +102,7 @@ Example (included View of Delft sample):
 pixi run predict-dense-depth -- \
   --points-bin "examples/vod_8350-8365/velodyne/08350.bin" \
   --calib-txt "examples/vod_8350-8365/calib/08350.txt" \
-  --image-size 1248 1920 \
+  --image-size 1216 1936 \
   --output "examples/vod_8350-8365/depth/08350_pred_depth.npy"
 ```
 
