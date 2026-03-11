@@ -2,7 +2,7 @@
 
 Published at **ICLR 2026 Workshop on Multimodal Intelligence Workshop**.
 
-The method reconstructs **dense depth** from extremely sparse multimodal range measurements using **localized Gaussian Processes**, and plugs this depth into diffusion-based rendering pipelines for more robust and geometrically consistent novel-view synthesis.
+The method reconstructs dense depth from extremely sparse multimodal range measurements using localized Gaussian Processes, and plugs this depth into diffusion-based rendering pipelines for more robust and geometrically consistent novel-view synthesis.
 
 ![Pipeline overview](images/pipeline_preview.png)
 
