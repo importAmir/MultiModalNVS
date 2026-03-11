@@ -4,8 +4,6 @@ Published at **ICLR 2026 Workshop on Multimodal Intelligence Workshop**.
 
 The method reconstructs **dense depth** from extremely sparse multimodal range measurements using **localized Gaussian Processes**, and plugs this depth into diffusion-based rendering pipelines for more robust and geometrically consistent novel-view synthesis.
 
-- **Pipeline**: [`images/pipeline.pdf`](images/pipeline.pdf)
-
 ![Pipeline overview](images/pipeline_preview.png)
 
 ## Quick installation with Pixi
@@ -66,7 +64,7 @@ pixi run download-dav2-checkpoints
 
 ### 7. Copy custom code into the GEN3C pipeline
 
-This copies **only tracked scripts in this repo** into the `GEN3C` submodule.
+This step synchronizes the local customization code in this repository into the `GEN3C` submodule so it is available to the GEN3C pipeline. Run this again whenever you modify the local customization scripts.
 
 ```bash
 pixi run copy-custom
@@ -76,9 +74,7 @@ pixi run copy-custom
 
 ### Dense depth from sparse range (`predict_dense_depth.py`)
 
-`predict_dense_depth.py` predicts dense camera-Z depth on a raster of size `H x W` from sparse 3D points using:
-- **`local_gp_mle`** (default): local GP per pixel with per-target length-scale optimization
-- **`kernel`**: fast Gaussian kernel regression
+`predict_dense_depth.py` predicts dense camera-Z depth on a raster of size `H x W` from sparse 3D points.
 
 ```bash
 python3 predict_dense_depth.py \
@@ -92,12 +88,7 @@ python3 predict_dense_depth.py \
 
 Rendering uses the predicted depth to produce warps/masks for a target camera trajectory.
 
-### Diffusion
-
-Diffusion consumes the rendered warps + masks and produces the final novel-view video.
-
 ```bash
-# 1) Render warps/masks
 pixi run run_render_only_image_generic -- \
   --input_image_path /path/to/image.jpg \
   --lidar_path /path/to/depth.npy \
@@ -112,13 +103,21 @@ pixi run run_render_only_image_generic -- \
   --default_cy 624.89592 \
   --rendered_images_path rendered_warp_images.pt \
   --rendered_masks_path rendered_warp_masks.pt
+```
 
-# 2) Preview rendered visualization
+### Rendering preview video
+
+```bash
 pixi run run_generate_rendering_video_generic -- \
   --rendered_images_path rendered_warp_images.pt \
   --video_save_name render_preview
+```
 
-# 3) Diffusion refinement
+### Diffusion
+
+Diffusion consumes the rendered warps + masks and produces the final novel-view video.
+
+```bash
 pixi run run_diffusion_only_generic -- \
   --input_image_path /path/to/image.jpg \
   --rendered_images_path rendered_warp_images.pt \
@@ -136,7 +135,5 @@ pixi run run_diffusion_only_generic -- \
 ![NVS metric](images/NVS_Metric.png)
 
 ![Depth metric](images/Depth_metric.png)
-
-- Visual results: [`images/visual_results.pdf`](images/visual_results.pdf)
 
 ![Visual results preview](images/visual_results_preview.png)
