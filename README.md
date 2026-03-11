@@ -76,42 +76,49 @@ pixi run copy-custom
 
 `predict_dense_depth.py` predicts dense camera-Z depth on a raster of size `H x W` from sparse 3D points.
 
+Main command:
+
 ```bash
 pixi run predict-dense-depth -- \
-  --points-bin /path/to/000750.bin \
-  --calib-txt /path/to/000750.txt \
-  --image-size 1248 1920
+  --points-bin /path/to/points.bin \
+  --calib-txt /path/to/calib.txt \
+  --image-size H W \
+  --output /path/to/output_depth.npz
 ```
 
-#### Input format (View of Delft example)
+Inputs:
 
-- **`--points-bin`**: A binary file of `float32` values.
-  - View of Delft radar format (default `--points-format vod7`): shape `(N, 7)` with columns
-    `x, y, z, RCS, v_r, v_r_comp, t_id`.
-- **`--calib-txt`**: A KITTI-style calibration text file that contains:
-  - `Tr_velo_to_cam:` (12 numbers forming a 3×4 extrinsic matrix)
-  - `P2:` (3×4 projection matrix; intrinsics are read from this by default)
+- **`--points-bin`**: Binary `float32` point file. View of Delft uses the default `--points-format vod7` with shape `(N, 7)`:
+  `x, y, z, RCS, v_r, v_r_comp, t_id`.
+- **`--calib-txt`**: KITTI-style calibration text file that contains `Tr_velo_to_cam:` (3×4 extrinsic) and `P2:` (3×4 projection; used for intrinsics).
+- **`--image-size H W`**: Dense depth output resolution.
+- **`--output`**: Output `.npz` file. The saved file contains arrays `depth`, `variance`, and `valid`.
 
-Example (paths from a local View-of-Delft installation):
+Example (included View of Delft sample):
 
 ```bash
-POINTS_BIN="view_of_delft_PUBLIC/radar/training/velodyne/00000.bin"
-CALIB_TXT="view_of_delft_PUBLIC/radar/training/calib/00000.txt"
+pixi run predict-dense-depth -- \
+  --points-bin "examples/vod_8350-8365/velodyne/08350.bin" \
+  --calib-txt "examples/vod_8350-8365/calib/08350.txt" \
+  --image-size 1248 1920 \
+  --output "examples/vod_8350-8365/depth/08350_pred_depth.npz"
+```
 
-# sanity checks
-ls -lh "$POINTS_BIN" "$CALIB_TXT"
+Convert the predicted depth to a `.npy` depth map (so it can be consumed by the rendering pipeline below):
+
+```bash
 python - <<'PY'
-import pathlib
 import numpy as np
-p = pathlib.Path("view_of_delft_PUBLIC/radar/training/velodyne/00000.bin")
-a = np.fromfile(p, dtype=np.float32)
-print("float32 count:", a.size, "(expected multiple of 7 for vod7)")
+npz = np.load("examples/vod_8350-8365/depth/08350_pred_depth.npz")
+depth = npz["depth"].astype(np.float32)
+np.save("examples/vod_8350-8365/depth/08350_pred_depth.npy", depth)
+print("Saved:", "examples/vod_8350-8365/depth/08350_pred_depth.npy", depth.shape, depth.dtype)
 PY
 ```
 
 ### Rendering pipeline
 
-This command runs the full pipeline for a short sequence: it renders novel views from a reference image + poses using a depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
+After you generate `examples/vod_8350-8365/depth/08350_pred_depth.npy` in the step above, run the full pipeline for a short sequence. It renders novel views from a reference image + poses using the depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
 
 ```bash
 pixi run run_evaluate_video_quality -- \
@@ -119,7 +126,7 @@ pixi run run_evaluate_video_quality -- \
   --poses_extrinsics_dir "examples/vod_8350-8365/poses" \
   --reference_images_folder "examples/vod_8350-8365/images" \
   --output_dir "evaluation_results/depth_sequence/08350" \
-  --lidar_path "examples/vod_8350-8365/depth/08350_dense_depth.npy" \
+  --lidar_path "examples/vod_8350-8365/depth/08350_pred_depth.npy" \
   --default_fx 1495.468642 \
   --default_fy 1495.468642 \
   --default_cx 961.272442 \
