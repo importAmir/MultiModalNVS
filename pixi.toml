@@ -170,6 +170,16 @@ CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/i
 '
 """
 
+run_evaluate_video_quality = """
+bash -c '
+set -euo pipefail
+PY="$(command -v python)"
+PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
+cd GEN3C
+CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/evaluate_video_quality.py "$@"
+'
+"""
+
 run_render_only_image_generic = """
 bash -c '
 set -euo pipefail

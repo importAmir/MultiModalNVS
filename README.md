@@ -94,51 +94,37 @@ pixi run predict-dense-depth -- \
   - `P2:` (3×4 projection matrix; intrinsics are read from this by default)
   - Example path: `view_of_delft_PUBLIC/radar/training/calib/00000.txt`
 
-### Rendering
+### Rendering pipeline (end-to-end)
 
-Rendering uses the predicted depth to produce warps/masks for a target camera trajectory.
+This command runs the full pipeline for a short sequence: it renders novel views from a reference image + poses using a depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
 
 ```bash
-pixi run run_render_only_image_generic -- \
-  --input_image_path /path/to/image.jpg \
-  --lidar_path /path/to/depth.npy \
-  --filter_points_threshold 1.0 \
-  --trajectory_generation_method action_based_movement \
-  --trajectory left \
-  --camera_rotation center_facing \
-  --movement_distance 1 \
+pixi run run_evaluate_video_quality -- \
+  --input_image "Samples/Sequence/8350-8365/images/08350.jpg" \
+  --poses_extrinsics_dir "Samples/Sequence/8350-8365/poses" \
+  --reference_images_folder "Samples/Sequence/8350-8365/images" \
+  --output_dir "evaluation_results/depth_sequence/08350" \
+  --lidar_path "Samples/depth_sequence/prediction_mean_pixel_dataIdx8350_RadarTxNum1_VarTHInf_circle_radius2_TrVeloToCam_Zvalue.npy" \
   --default_fx 1495.468642 \
   --default_fy 1495.468642 \
   --default_cx 961.272442 \
   --default_cy 624.89592 \
-  --rendered_images_path rendered_warp_images.pt \
-  --rendered_masks_path rendered_warp_masks.pt
-```
-
-### Rendering preview video
-
-```bash
-pixi run run_generate_rendering_video_generic -- \
-  --rendered_images_path rendered_warp_images.pt \
-  --video_save_name render_preview
-```
-
-### Diffusion
-
-Diffusion consumes the rendered warps + masks and produces the final novel-view video.
-
-```bash
-pixi run run_diffusion_only_generic -- \
-  --input_image_path /path/to/image.jpg \
-  --rendered_images_path rendered_warp_images.pt \
-  --rendered_masks_path rendered_warp_masks.pt \
+  --num_video_frames 121 \
+  --fps 24 \
   --offload_diffusion_transformer \
   --offload_tokenizer \
   --disable_prompt_encoder \
-  --save_buffer \
-  --video_save_name diffusion_result \
-  --video_save_folder outputs/
+  --save_buffer
 ```
+
+#### Example data (View of Delft)
+
+The folder `Samples/Sequence/8350-8365/` is a small example extracted from the **View of Delft (VoD)** dataset:
+- `Samples/Sequence/8350-8365/images/08350.jpg` … `08365.jpg`
+- `Samples/Sequence/8350-8365/poses/08350.json` … `08365.json`
+- `Samples/Sequence/8350-8365/calib/08350.txt` (start-frame calibration)
+- `Samples/Sequence/8350-8365/velodyne/08350.bin` (start-frame sparse points)
+- `Samples/Sequence/8350-8365/intrinsics/08350.json` (intrinsics derived from `P2`)
 
 ## Results
 
@@ -147,3 +133,33 @@ pixi run run_diffusion_only_generic -- \
 ![Depth metric](images/Depth_metric.png)
 
 ![Visual results preview](images/visual_results_preview.png)
+
+## Citation
+
+### View of Delft dataset
+
+```bibtex
+@ARTICLE{apalffy2022,
+  author={Palffy, Andras and Pool, Ewoud and Baratam, Srimannarayana and Kooij, Julian F. P. and Gavrila, Dariu M.},
+  journal={IEEE Robotics and Automation Letters},
+  title={Multi-Class Road User Detection With 3+1D Radar in the View-of-Delft Dataset},
+  year={2022},
+  volume={7},
+  number={2},
+  pages={4961-4968},
+  doi={10.1109/LRA.2022.3147324}
+}
+```
+
+### This work
+
+If you use this codebase in your research, please cite:
+
+```bibtex
+@article{javadi2026single,
+  title={A Single Image and Multimodality Is All You Need for Novel View Synthesis},
+  author={Javadi, Amirhosein and Gau, Chi-Shiang and Polyzos, Konstantinos D and Javidi, Tara},
+  journal={arXiv preprint arXiv:2602.17909},
+  year={2026}
+}
+```
