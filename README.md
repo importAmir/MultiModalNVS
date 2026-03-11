@@ -77,11 +77,10 @@ pixi run copy-custom
 `predict_dense_depth.py` predicts dense camera-Z depth on a raster of size `H x W` from sparse 3D points.
 
 ```bash
-python3 predict_dense_depth.py \
+pixi run predict-dense-depth -- \
   --points-bin /path/to/000750.bin \
   --calib-txt /path/to/000750.txt \
-  --image-size 1248 1920 \
-  --prediction-model local_gp_mle
+  --image-size 1248 1920
 ```
 
 ### Rendering
