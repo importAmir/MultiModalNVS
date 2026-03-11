@@ -44,3 +44,10 @@ radarPointCloud_prediction_pixel_circle_TrVeloToCam_Zvalue.m
 data.dvc
 pip_constraints.txt
 pixel_selector.py
+
+# Local scripts (not tracked)
+cache4d_multiview.py
+convert_mat_to_sparse_depth.py
+convert_sparse_depth_to_mat.py
+create_rendering_video_input.py
+create_rendering_multiview_waymo_video_input.py
