@@ -81,7 +81,6 @@ libgl = "*"
 check-python = "python --version"
 check-gpu = "python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\\nGPU count: {torch.cuda.device_count()}\\nCurrent device: {torch.cuda.get_device_name()}\" if torch.cuda.is_available() else \"No CUDA GPU available\")'"
 check-torch = "python -c 'import torch; print(f\"PyTorch version: {torch.__version__}\\nCUDA version: {torch.version.cuda}\")'"
-check-cuda = "nvcc --version"
 
 # Copy custom code to GEN3C submodule
 copy-custom = """
@@ -153,6 +152,14 @@ pixi run install-apex && \
 pixi run install-moge
 """
 
+predict-dense-depth = """
+bash -c '
+set -euo pipefail
+PY="$(command -v python)"
+PYTHONDONTWRITEBYTECODE=1 "$PY" predict_dense_depth.py "$@"
+'
+"""
+
 run_diffusion_only_generic = """
 bash -c '
 set -euo pipefail
@@ -160,16 +167,6 @@ PY="$(command -v python)"
 PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
 cd GEN3C
 CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/diffusion_only.py "$@"
-'
-"""
-
-run_evaluate_video_quality = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C
-CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/evaluate_video_quality.py "$@"
 '
 """
 
@@ -183,46 +180,6 @@ CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/i
 '
 """
 
-run_render_only_multiview_image_generic = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C
-CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/create_rendering_multiview_waymo_image_input.py "$@"
-'
-"""
-
-run_render_only_multiview_waymo_image_input_generic = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$($PY -c "import sys; print(sys.prefix)")"
-cd GEN3C
-CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/create_rendering_multiview_waymo_image_input.py "$@"
-'
-"""
-
-run_render_only_video_generic = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C
-CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/create_rendering_video_input.py "$@"
-'
-"""
-
-run_render_only_multiview_waymo_video_input_generic = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C
-CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/create_rendering_multiview_waymo_video_input.py "$@"
-'
-"""
-
 run_generate_rendering_video_generic = """
 bash -c '
 set -euo pipefail
@@ -232,34 +189,3 @@ cd GEN3C
 CUDA_HOME="$PIXI_ENV_PATH" PYTHONPATH="$(pwd)" "$PY" cosmos_predict1/diffusion/inference/generate_rendering_video.py "$@"
 '
 """
-
-run_fastapi_server = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C/gui
-CUDA_HOME="$PIXI_ENV_PATH" fastapi dev --no-reload ./api/server.py --host 0.0.0.0
-'
-"""
-
-build_gui = """
-bash -c '
-set -euo pipefail
-cd GEN3C/gui
-cmake . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
-cmake --build build --config RelWithDebInfo -j
-'
-"""
-
-run_gui_client = """
-bash -c '
-set -euo pipefail
-PY="$(command -v python)"
-PIXI_ENV_PATH="$("$PY" -c "import sys; print(sys.prefix)")"
-cd GEN3C/gui
-CUDA_HOME="$PIXI_ENV_PATH" "$PY" api/client.py
-'
-"""
-
-
