@@ -88,13 +88,28 @@ pixi run predict-dense-depth -- \
 - **`--points-bin`**: A binary file of `float32` values.
   - View of Delft radar format (default `--points-format vod7`): shape `(N, 7)` with columns
     `x, y, z, RCS, v_r, v_r_comp, t_id`.
-  - Example path: `view_of_delft_PUBLIC/radar/training/velodyne/00000.bin`
 - **`--calib-txt`**: A KITTI-style calibration text file that contains:
   - `Tr_velo_to_cam:` (12 numbers forming a 3×4 extrinsic matrix)
   - `P2:` (3×4 projection matrix; intrinsics are read from this by default)
-  - Example path: `view_of_delft_PUBLIC/radar/training/calib/00000.txt`
 
-### Rendering pipeline (end-to-end)
+Example (paths from a local View-of-Delft installation):
+
+```bash
+POINTS_BIN="view_of_delft_PUBLIC/radar/training/velodyne/00000.bin"
+CALIB_TXT="view_of_delft_PUBLIC/radar/training/calib/00000.txt"
+
+# sanity checks
+ls -lh "$POINTS_BIN" "$CALIB_TXT"
+python - <<'PY'
+import pathlib
+import numpy as np
+p = pathlib.Path("view_of_delft_PUBLIC/radar/training/velodyne/00000.bin")
+a = np.fromfile(p, dtype=np.float32)
+print("float32 count:", a.size, "(expected multiple of 7 for vod7)")
+PY
+```
+
+### Rendering pipeline
 
 This command runs the full pipeline for a short sequence: it renders novel views from a reference image + poses using a depth map, applies diffusion, and writes the outputs/metrics to `--output_dir`.
 
@@ -119,13 +134,22 @@ pixi run run_evaluate_video_quality -- \
 
 #### Example data (View of Delft)
 
-The folder `examples/vod_8350-8365/` is a small example extracted from the **View of Delft (VoD)** dataset:
-- `examples/vod_8350-8365/images/08350.jpg` … `08365.jpg`
-- `examples/vod_8350-8365/poses/08350.json` … `08365.json`
-- `examples/vod_8350-8365/calib/08350.txt` (start-frame calibration)
-- `examples/vod_8350-8365/velodyne/08350.bin` (start-frame sparse points)
-- `examples/vod_8350-8365/intrinsics/08350.json` (intrinsics derived from `P2`)
-- `examples/vod_8350-8365/depth/08350_dense_depth.npy` (dense depth for the start frame used by the command above)
+The repo includes a small example under `examples/vod_8350-8365/` (derived from **View of Delft (VoD)**):
+
+```bash
+EX="examples/vod_8350-8365"
+
+ls -1 "$EX/images/" | head
+ls -1 "$EX/poses/"  | head
+
+ls -lh \
+  "$EX/images/08350.jpg" \
+  "$EX/poses/08350.json" \
+  "$EX/calib/08350.txt" \
+  "$EX/velodyne/08350.bin" \
+  "$EX/intrinsics/08350.json" \
+  "$EX/depth/08350_dense_depth.npy"
+```
 
 ## Results
 
