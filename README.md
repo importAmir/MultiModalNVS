@@ -144,7 +144,7 @@ pixi run run_evaluate_video_quality -- \
   --input_image "examples/vod_8350-8365/images/08350.jpg" \
   --poses_extrinsics_dir "examples/vod_8350-8365/poses" \
   --reference_images_folder "examples/vod_8350-8365/images" \
-  --output_dir "evaluation_results/depth_sequence/08350" \
+  --output_dir "evaluation_results/vod_8350-8365" \
   --lidar_path "examples/vod_8350-8365/depth/08350_pred_depth.npy" \
   --default_fx 1495.468642 \
   --default_fy 1495.468642 \
