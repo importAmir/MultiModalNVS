@@ -1,6 +1,25 @@
+<h1 align="center">A Single Image and Multimodality Is All You Need for Novel View Synthesis</h1>
+
+<p align="center">
+  <a href="https://arxiv.org/pdf/2602.17909v1">
+    <img src="https://img.shields.io/badge/Paper-PDF-blue?style=for-the-badge" alt="Paper">
+  </a>
+  <a href="#bibtex">
+    <img src="https://img.shields.io/badge/BibTeX-Citation-orange?style=for-the-badge" alt="BibTeX">
+  </a>
+</p>
+
+<p align="center">
+  Amirhosein Javadi, Chi-Shiang Gau, Konstantinos D. Polyzos, Tara Javidi
+</p>
+
+---
+
 ## MultiModalNVS: Official implementation of “A Single Image and Multimodality Is All You Need for Novel View Synthesis”
 
 Published at **ICLR 2026 Workshop on Multimodal Intelligence Workshop**.
+
+
 
 The method reconstructs dense depth from extremely sparse multimodal range measurements using localized Gaussian Processes, and plugs this depth into diffusion-based rendering pipelines for more robust and geometrically consistent novel-view synthesis.
 
@@ -196,7 +215,7 @@ pixi run run_evaluate_video_quality -- \
   doi={10.1109/LRA.2022.3147324}}
 ```
 
-### This work
+## BibTeX
 
 If you use this codebase in your research, please cite:
 
