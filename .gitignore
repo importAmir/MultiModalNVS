@@ -47,6 +47,7 @@ pip_constraints.txt
 pixel_selector.py
 
 # Local scripts (not tracked)
+evaluate_depth_accuracy.py
 cache4d_multiview.py
 convert_mat_to_sparse_depth.py
 convert_sparse_depth_to_mat.py

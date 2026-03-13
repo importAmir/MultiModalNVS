@@ -66,6 +66,7 @@ def load_sparse_points_bin(points_bin_path: Pathish, *, points_format: str = "vo
     Supported formats:
     - vod7: VoD radar-style (N,7) floats: x,y,z,RCS,v_r,v_r_comp,t_id
     - xyz3: generic (N,3) floats: x,y,z
+    - xyz4: KITTI LiDAR-style (N,4) floats: x,y,z,intensity (use cols 0:3 for xyz)
     """
     points_bin_path = Path(points_bin_path)
     data = np.fromfile(points_bin_path, dtype=np.float32)
@@ -78,7 +79,11 @@ def load_sparse_points_bin(points_bin_path: Pathish, *, points_format: str = "vo
         if data.size % 3 != 0:
             raise ValueError(f"File {points_bin_path} has {data.size} floats; expected multiple of 3 for xyz3.")
         return data.reshape((-1, 3))
-    raise ValueError("points_format must be one of: vod7, xyz3")
+    if fmt == "xyz4":
+        if data.size % 4 != 0:
+            raise ValueError(f"File {points_bin_path} has {data.size} floats; expected multiple of 4 for xyz4.")
+        return data.reshape((-1, 4))
+    raise ValueError("points_format must be one of: vod7, xyz3, xyz4")
 
 
 def load_tr_velo_to_cam(calib_txt_path: Pathish) -> np.ndarray:
@@ -896,6 +901,18 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         help="Depth centering shift: auto/median/mean/none or a numeric constant.",
     )
     p.add_argument("--var-threshold", type=float, default=float("inf"))
+    p.add_argument(
+        "--percentiles",
+        nargs="+",
+        type=float,
+        default=None,
+        metavar="P",
+        help=(
+            "Keep these percentiles of pixels with lowest variance (uncertainty masking). "
+            "E.g. --percentiles 40 60 80 100. Prediction runs once; each percentile saves a separate file. "
+            "Overrides --var-threshold when set."
+        ),
+    )
     p.add_argument("--invalid-value", type=float, default=-1.0)
     p.add_argument("--stride", type=int, default=1, help="Stride for pixel grid (>=1).")
 
@@ -936,6 +953,11 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
 
     args = p.parse_args(list(argv) if argv is not None else None)
     show_progress = not bool(args.no_progress)
+
+    if args.percentiles is not None:
+        for pct in args.percentiles:
+            if pct <= 0 or pct > 100:
+                raise SystemExit(f"--percentiles must be in (0, 100]; got {pct}. Use 100 to keep all pixels.")
 
     # Normalize/validate prediction model.
     args.prediction_model = str(args.prediction_model).strip()
@@ -1115,25 +1137,65 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         print(f"Shard predictions: {indices.size} pixels (out of {num_targets})")
         return 0
 
+    var_threshold = args.var_threshold
+    if args.percentiles is not None:
+        var_threshold = float("inf")  # Get all predictions first; filter by percentile below
     pred_mean, pred_var, valid = _dense_from_sparse(
         num_targets=num_targets,
         indices=indices,
         mean=mean,
         var=var,
         invalid_value=args.invalid_value,
-        var_threshold=args.var_threshold,
+        var_threshold=var_threshold,
     )
 
-    depth_map = pred_mean.reshape(hw_eff)
+    depth_map_full = pred_mean.reshape(hw_eff)
     var_map = pred_var.reshape(hw_eff)
-    valid_map = valid.reshape(hw_eff)
 
+    if args.percentiles is not None:
+        # Percentile = fraction of TOTAL pixels to keep (the P% with lowest variance).
+        # Pixels without predictions have var=inf and are never kept.
+        num_total = pred_var.size
+        finite_mask = np.isfinite(pred_var) & np.isfinite(pred_mean) & (pred_var < np.float32("inf"))
+        valid_variances = pred_var[finite_mask].astype(np.float64)
+        percentiles = sorted(set(int(p) for p in args.percentiles))
+        for pct in percentiles:
+            if valid_variances.size > 0:
+                # Target: keep exactly P% of total pixels (the P% with lowest variance)
+                target_count = int(round(float(pct) / 100.0 * num_total))
+                target_count = min(target_count, valid_variances.size)  # cap by available
+                if target_count <= 0:
+                    valid_pct = np.zeros_like(pred_var, dtype=bool)
+                else:
+                    # Take the target_count pixels with lowest variance (break ties by order)
+                    order = np.argsort(pred_var.astype(np.float64))
+                    valid_pct = np.zeros_like(pred_var, dtype=bool)
+                    kept = 0
+                    for idx in order:
+                        if np.isfinite(pred_var[idx]) and np.isfinite(pred_mean[idx]):
+                            valid_pct[idx] = True
+                            kept += 1
+                            if kept >= target_count:
+                                break
+            else:
+                valid_pct = np.zeros_like(pred_var, dtype=bool)
+            valid_map = valid_pct.reshape(hw_eff)
+            depth_map = np.where(valid_map, depth_map_full, np.float32(args.invalid_value))
+            pct_path = out_path.with_name(out_path.stem + f"_p{pct}" + out_path.suffix)
+            depth_path, var_path, valid_path = _sidecar_output_paths(pct_path)
+            np.save(depth_path, depth_map.astype(np.float32, copy=False))
+            np.save(var_path, var_map.astype(np.float32, copy=False))
+            np.save(valid_path, valid_map.astype(np.uint8, copy=False))
+            print(f"Saved p{pct}%: {depth_path} (valid: {int(valid_map.sum())} / {valid_map.size})")
+        print(f"Output shape: {depth_map_full.shape} (stride={args.stride}, original image={h}x{w})")
+        return 0
+
+    valid_map = valid.reshape(hw_eff)
+    depth_map = depth_map_full
     depth_path, var_path, valid_path = _sidecar_output_paths(out_path)
     np.save(depth_path, depth_map.astype(np.float32, copy=False))
     np.save(var_path, var_map.astype(np.float32, copy=False))
-    # Save valid as uint8 for compactness/compatibility (0/1).
     np.save(valid_path, valid_map.astype(np.uint8, copy=False))
-
     print(f"Saved depth: {depth_path}")
     print(f"Saved variance: {var_path}")
     print(f"Saved valid: {valid_path}")
