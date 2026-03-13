@@ -6,6 +6,19 @@ The method reconstructs dense depth from extremely sparse multimodal range measu
 
 ![Pipeline overview](images/pipeline_preview.png)
 
+### Comparison videos (Ground Truth | Vision Only NVS | Multi-Modal NVS (Ours))
+
+| Sequence | Preview |
+|----------|---------|
+| 00742 | ![00742](images/00742_gt_moge_ours.gif) |
+| 01715 | ![01715](images/01715_gt_moge_ours.gif) |
+| 01743 | ![01743](images/01743_gt_moge_ours.gif) |
+| 02451 | ![02451](images/02451_gt_moge_ours.gif) |
+| 07035 | ![07035](images/07035_gt_moge_ours.gif) |
+| 07088 | ![07088](images/07088_gt_moge_ours.gif) |
+| 08350 | ![08350](images/08350_gt_moge_ours.gif) |
+| 08588 | ![08588](images/08588_gt_moge_ours.gif) |
+
 ## Quick installation with Pixi
 
 ### 1. Install Pixi
@@ -161,21 +174,6 @@ pixi run run_evaluate_video_quality -- \
 ![NVS metric](images/NVS_Metric.png)
 
 ![Depth metric](images/Depth_metric.png)
-
-### Comparison videos (Ground Truth | Vision Only NVS | Multi-Modal NVS (Ours))
-
-Sample comparison videos (ordered from smallest to largest sequence ID). Each link opens the video on GitHub.
-
-| Sequence | Video |
-|----------|-------|
-| 00742 | [▶ 00742](images/00742_gt_moge_ours.mp4) |
-| 01715 | [▶ 01715](images/01715_gt_moge_ours.mp4) |
-| 01743 | [▶ 01743](images/01743_gt_moge_ours.mp4) |
-| 02451 | [▶ 02451](images/02451_gt_moge_ours.mp4) |
-| 07035 | [▶ 07035](images/07035_gt_moge_ours.mp4) |
-| 07088 | [▶ 07088](images/07088_gt_moge_ours.mp4) |
-| 08350 | [▶ 08350](images/08350_gt_moge_ours.mp4) |
-| 08588 | [▶ 08588](images/08588_gt_moge_ours.mp4) |
 
 ## Citation
 
