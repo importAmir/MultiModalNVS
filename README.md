@@ -8,16 +8,37 @@ The method reconstructs dense depth from extremely sparse multimodal range measu
 
 ### Comparison videos (Ground Truth | Vision Only NVS | Multi-Modal NVS (Ours))
 
-| Sequence | Preview |
-|----------|---------|
-| 00742 | ![00742](images/00742_gt_moge_ours.gif) |
-| 01715 | ![01715](images/01715_gt_moge_ours.gif) |
-| 01743 | ![01743](images/01743_gt_moge_ours.gif) |
-| 02451 | ![02451](images/02451_gt_moge_ours.gif) |
-| 07035 | ![07035](images/07035_gt_moge_ours.gif) |
-| 07088 | ![07088](images/07088_gt_moge_ours.gif) |
-| 08350 | ![08350](images/08350_gt_moge_ours.gif) |
-| 08588 | ![08588](images/08588_gt_moge_ours.gif) |
+**00742**
+
+![00742](images/00742_gt_moge_ours.gif)
+
+**01715**
+
+![01715](images/01715_gt_moge_ours.gif)
+
+**01743**
+
+![01743](images/01743_gt_moge_ours.gif)
+
+**02451**
+
+![02451](images/02451_gt_moge_ours.gif)
+
+**07035**
+
+![07035](images/07035_gt_moge_ours.gif)
+
+**07088**
+
+![07088](images/07088_gt_moge_ours.gif)
+
+**08350**
+
+![08350](images/08350_gt_moge_ours.gif)
+
+**08588**
+
+![08588](images/08588_gt_moge_ours.gif)
 
 ## Quick installation with Pixi
 
