@@ -570,7 +570,7 @@ pre {
 
         <h3>Quantitative Results for Single-Image Novel View Synthesis</h3>
         <p>
-            Using sparse radar (0.02% pixel coverage) improves all NVS metrics over vision-only depth, including a 23.5% LPIPS reduction and 46.0% FID reduction.
+            On View-of-Delft, replacing vision-only depth with our multimodal reconstruction improves all video-generation metrics for both sparse radar (0.02% coverage) and sparse LiDAR (0.52% coverage). Relative to the vision-only baseline, radar improves PSNR by about 15.4% and SSIM by 6.6%, while reducing LPIPS by 23.5%, FID by 46.0%, and temporal LPIPS by 29.3%; LiDAR further improves performance, reaching the best overall scores across all metrics.
         </p>
         <center><img class="card-img-top img-fluid" src="images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
 
@@ -613,12 +613,6 @@ pre {
     year={2026},
 }</code>
 </pre>
-    </section>
-
-    
-    <section>
-        This webpage template was recycled from <u style="color:#5364cc"><a href='https://nv-tlabs.github.io/LION/'>here</a></u>.
-        <center><u style="color:#5364cc"><p><a href='https://accessibility.ucsd.edu/'><b>Accessibility</b></a></p></u></center>
     </section>
 
 </div>
