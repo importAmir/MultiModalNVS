@@ -1,0 +1,594 @@
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<script src="bootstrap.js"></script>
+<script type="text/javascript" charset="utf-8" src="https://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script> 
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<style type="text/css">
+body {
+    font-family: Arial, Helvetica;
+    font-weight: 300;
+    font-size: 17px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.header {
+    font-weight: 300;
+    line-height: 1.15em;
+}
+
+svg {
+  shape-rendering: geometricPrecision;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media screen and (min-width: 980px){
+    body {
+        width: 980px;
+    }
+}
+
+h1 {
+    font-weight:300;
+    line-height: 1.15em;
+}
+
+h2 {
+    font-size: 1.75em;
+}
+a:link,a:visited {
+    color: #5364cc;
+    text-decoration: none;
+}
+a:hover {
+    color: #208799;
+}
+h1 {
+    text-align: center;
+}
+h2,h3 {
+    text-align: left;
+}
+
+h1 {
+    font-size: 40px;
+    font-weight: 500;
+}
+h2 {
+    font-weight: 400;
+    margin: 16px 0px 4px 0px;
+}
+h3 {
+    font-weight: 600;
+    margin: 16px 0px 4px 0px;
+}
+
+li {
+    margin: 10px 0;
+}
+
+.paper-title {
+    padding: 1px 0px 1px 0px;
+    /* font-family: 'Titillium Web'; */
+    font-family: 'Arial'
+}
+section {
+    margin: 32px 0px 32px 0px;
+    text-align: justify;
+    clear: both;
+}
+.col-5 {
+     width: 20%;
+     float: left;
+}
+.col-4 {
+     width: 25%;
+     float: left;
+}
+.col-3 {
+     width: 33%;
+     float: left;
+}
+.col-2 {
+     width: 50%;
+     float: left;
+}
+.col-1 {
+     width: 100%;
+     float: left;
+}
+
+.author-row, .affil-row {
+    font-size: 26px;
+}
+
+.author-row-new { 
+    text-align: center; 
+}
+
+.author-row-new a {
+    display: inline-block;
+    font-size: 20px;
+    padding: 4px;
+}
+
+.author-row-new sup {
+    color: #313436;
+    font-size: 12px;
+}
+
+.affiliations-new {
+    font-size: 18px;
+    text-align: center;
+    width: 80%;
+    margin: 0 auto;
+    margin-bottom: 20px;
+}
+
+.row {
+    margin: 16px 0px 16px 0px;
+}
+.authors {
+    font-size: 26px;
+}
+.affiliatons {
+    font-size: 18px;
+}
+.affil-row {
+    margin-top: 18px;
+}
+.teaser {
+    max-width: 100%;
+}
+.text-center {
+    text-align: center;  
+}
+.screenshot {
+    width: 256px;
+    border: 1px solid #ddd;
+}
+.screenshot-el {
+    margin-bottom: 16px;
+}
+hr {
+    height: 1px;
+    border: 0; 
+    border-top: 1px solid #ddd;
+    margin: 0;
+}
+.material-icons {
+    vertical-align: -6px;
+}
+p {
+    line-height: 1.25em;
+}
+.caption {
+    font-size: 14px;
+    color: #565656;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    margin-left: 175px;
+    margin-right: 175px;
+    text-align: center;
+}
+
+
+video {
+    display: block;
+    margin: auto;
+}
+
+
+figure {
+    display: block;
+    margin: auto;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#bibtex pre {
+    font-size: 14px;
+    background-color: #eee;
+    padding: 16px;
+}
+.blue {
+    color: #2c82c9;
+    font-weight: bold;
+}
+.orange {
+    color: #d35400;
+    font-weight: bold;
+}
+.flex-row {
+    display: flex;
+    flex-flow: row wrap;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.paper-btn-coming-soon {
+    position: relative; 
+    top: 0;
+    left: 0;
+}
+
+.coming-soon {
+    position: absolute;
+    top: -15px;
+    right: -15px;
+}
+
+.paper-btn {
+  position: relative;
+  text-align: center;
+  justify-content: center;
+
+  display: inline-flex;
+  margin: 8px;
+  padding: 8px 8px;
+
+  border-width: 0;
+  outline: none;
+  border-radius: 2px;
+  
+  background-color: #5364cc;
+  color: white !important;
+  font-size: 20px;
+  width: 100px;
+  font-weight: 600;
+}
+.paper-btn-parent {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0px;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.paper-btn:hover {
+    opacity: 0.85;
+}
+
+.example-btn {
+    position: relative;
+    text-align: center;
+    justify-content: center;
+
+    display: inline-flex;
+    margin: 8px;
+    padding: 8px 8px;
+
+    border-width: 0;
+    outline: none;
+    border-radius: 2px;
+
+    /* background-color: #4cd468; */
+    background-color: #5364cc;
+    color: white !important;
+    font-size: 20px;
+    width: 220px;
+    font-weight: 600;
+}
+.example-btn-parent {
+    display: flex;
+    justify-content: center;
+    margin: 16px 0px;
+}
+
+.example-btn:hover {
+    opacity: 0.85;
+}
+
+.container {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+.venue {
+    font-size: 23px;
+}
+
+.topnav {
+    background-color: #EEEEEE;
+    overflow: hidden;
+}
+
+.topnav div {
+    max-width: 1070px;
+    margin: 0 auto;
+}
+
+.topnav a {
+    display: inline-block;
+    color: black;
+    text-align: center;
+    vertical-align: middle;
+    padding: 16px 16px;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.topnav img {
+    padding: 2px 0px;
+    width: 100%;
+    margin: 0.2em 0px 0.3em 0px;
+    vertical-align: middle;
+}
+
+pre {
+    font-size: 0.9em;
+    padding-left: 7px;
+    padding-right: 7px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border-radius: 3px;
+    background-color: rgb(235, 235, 235);
+    overflow-x: auto;
+}
+
+.download-thumb {
+    display: flex;
+}
+
+@media only screen and (max-width: 620px) {
+    .download-thumb {
+        display: none;
+    }
+}
+
+.paper-stuff {
+    width: 50%;
+    font-size: 20px;
+}
+
+@media only screen and (max-width: 620px) {
+    .paper-stuff {
+        width: 100%;
+    }
+}
+* {
+  box-sizing: border-box;
+}
+
+.column {
+  text-align: center;
+  float: left;
+  width: 16.666%;
+  padding: 5px;
+}
+.column3 {
+  text-align: center;
+  float: left;
+  width: 33.333%;
+  padding: 5px;
+}
+.column4 {
+  text-align: center;
+  float: left;
+  width: 50%;
+  padding: 5px;
+}
+.column5 {
+  text-align: center;
+  float: left;
+  width: 20%;
+  padding: 5px;
+}
+.border-right {
+    border-right: 1px solid black;
+}
+.border-bottom{
+    border-bottom: 1px solid black;
+}
+
+
+
+/* Clearfix (clear floats) */
+.row::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+}
+.figure-img {
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.spaced-list{
+    margin: 10px 0;
+}
+
+
+
+
+
+
+
+
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+
+
+
+
+
+/* Responsive layout - makes the three columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 500px) {
+  .column {
+    width: 100%;
+  }
+}
+@media screen and (max-width: 500px) {
+  .column3 {
+    width: 100%;
+  }
+}
+
+</style>
+<link rel="stylesheet" href="bootstrap-grid.css">
+
+<script type="text/javascript" src="../js/hidebib.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Titillium+Web:400,600,400italic,600italic,300,300italic' rel='stylesheet' type='text/css'>
+    <head>
+        <title>A Single Image and Multimodality Is All You Need for Novel View Synthesis</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta property="og:description" content="A Single Image and Multimodality Is All You Need for Novel View Synthesis"/>
+        <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+    </head>
+
+ <body>
+
+
+<div class="container">
+    <div class="paper-title">
+    <h1> 
+        A Single Image and Multimodality Is All You Need for Novel View Synthesis </h1>
+    </div>
+
+    <!-- <div id="authors" style="font-family: 'Titillium Web';"> -->
+        <div id="authors" style="font-family: 'Arial';">
+            <center>
+            <div class="author-row-new">
+                <a href="https://importamir.github.io">Amirhosein Javadi</a>, <a href="#">Chi-Shiang Gau</a>, <a href="#">Konstantinos D. Polyzos</a>, <a href="https://tjavidi.eng.ucsd.edu">Tara Javidi</a>
+            </div>
+        </center>
+        <center>
+        <div class="affiliations">
+            <span>Department of Electrical and Computer Engineering, University of California San Diego</span>
+        </div>
+
+        <div class="affil-row">
+            <div class="venue text-center"><b>ICLR 2026 Workshop</b></div>
+        </div>
+
+        </center>
+
+        <div style="clear: both">
+            <div class="paper-btn-parent">
+                <a class="paper-btn" href="../GS_Depth_ICLR_Workshop/iclr2026_conference.pdf">
+                    <span class="material-icons" style="margin-right: 6px;"> article </span> 
+                    Paper
+                </a>
+                <a class="paper-btn" href="https://github.com/importAmir/radar-vision-3d-rendering">
+                    <span class="material-icons" style="margin-right: 6px;"> code </span>
+                    Code
+                </a>
+            </div>
+        </div>
+    </div>
+    
+
+    
+    <section id="abstract">
+        <hr>
+        <h2>Abstract</h2>
+        <div class="mx-auto">
+            <p>
+              This work makes single-image novel view synthesis more reliable by replacing fragile vision-only depth with sparse radar or LiDAR sensing.
+              Even extremely sparse range measurements provide stronger geometry for diffusion-based video generation.
+              The method reconstructs dense depth using localized Gaussian Processes, producing both depth estimates and uncertainty maps.
+              These maps plug directly into existing diffusion pipelines without changing the generative model.
+              On real-world driving scenes, multimodal depth improves visual quality, geometric alignment, and temporal consistency over image-only baselines.
+              Using sparse radar reduces LPIPS by 23.5% and FID by 46.0%, showing that better geometry leads to better novel views.
+            </p>
+        </div>
+    </section>
+
+    <section id="method">
+        <hr>
+        <h2>Method</h2>
+        <div class="mx-auto">
+            <p>
+                Multimodal novel view synthesis pipeline overview
+            </p>
+            <center>
+                <img class="card-img-top img-fluid" src="images/pipeline.pdf" alt="Multimodal NVS pipeline overview" style="width:750px;max-width:100%;height:auto;border:1px solid #ddd;">
+            </center>
+            <p class="caption"><b>Figure 1.</b> Multimodal novel view synthesis pipeline overview.</p>
+            <p>
+                <ul>
+                    <li><b>Sparse Range Input &amp; Angular-Domain Projection.</b> Start with one RGB image and sparse radar or LiDAR measurements, then project both pixels and range points into a shared angular domain.</li>
+                    <li><b>Local Neighborhood Selection &amp; Localized GP Inference.</b> For each viewing direction, select nearby sparse range measurements and use a localized Gaussian Process to estimate depth efficiently.</li>
+                    <li><b>Dense Depth Map + Uncertainty Mask.</b> Produce a dense depth map along with uncertainty estimates, then mask high-uncertainty regions to remove unreliable geometry.</li>
+                    <li><b>3D Point Cloud Generation.</b> Back-project the RGB image using the reconstructed depth to form a colored 3D point cloud of the scene.</li>
+                    <li><b>Render Target Camera Views &amp; Let Diffusion Complete the Scene.</b> Render the point cloud along the target camera trajectory and feed the frames to a diffusion model to synthesize temporally consistent novel views.</li>
+                </ul>
+            </p>
+        </div>
+    </section>
+
+    <section id="results">
+        <hr>
+        <h2>Experiments</h2>
+
+        <h3>Qualitative Results for Single-Image Novel View Synthesis</h3>
+        <div class="row">
+            <div class="column4"><img class="img-fluid" src="images/00742_gt_moge_ours.gif" alt="Qualitative result 00742"></div>
+            <div class="column4"><img class="img-fluid" src="images/01715_gt_moge_ours.gif" alt="Qualitative result 01715"></div>
+            <div class="column4"><img class="img-fluid" src="images/01743_gt_moge_ours.gif" alt="Qualitative result 01743"></div>
+            <div class="column4"><img class="img-fluid" src="images/02451_gt_moge_ours.gif" alt="Qualitative result 02451"></div>
+            <div class="column4"><img class="img-fluid" src="images/07035_gt_moge_ours.gif" alt="Qualitative result 07035"></div>
+            <div class="column4"><img class="img-fluid" src="images/07088_gt_moge_ours.gif" alt="Qualitative result 07088"></div>
+            <div class="column4"><img class="img-fluid" src="images/08350_gt_moge_ours.gif" alt="Qualitative result 08350"></div>
+            <div class="column4"><img class="img-fluid" src="images/08588_gt_moge_ours.gif" alt="Qualitative result 08588"></div>
+        </div>
+
+        <h3>Quantitative Results for Single-Image Novel View Synthesis</h3>
+        <center><img class="card-img-top img-fluid" src="images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+
+        <h3>Quantitative Results for Depth Estimation Accuracy</h3>
+        <center><img class="card-img-top img-fluid" src="images/Depth_metric.png" alt="Depth estimation quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+
+        <h3>Ablation Study: Uncertainty-Based Masking</h3>
+        <center><img class="card-img-top img-fluid" src="images/ablation_uncertanity_masking.png" alt="Ablation uncertainty masking" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+
+    </section>
+
+    <section id="conclusion">
+        <hr>
+        <h2>Conclusion</h2>
+        <ul>
+            <li>This work shows that reliable geometry is the key to better single-image novel view synthesis, especially in real-world scenes where monocular depth can fail.</li>
+            <li>By combining one RGB image with extremely sparse radar or LiDAR measurements, the method produces stronger depth priors without modifying the diffusion model.</li>
+            <li>The results demonstrate that multimodal sensing improves visual quality, geometric alignment, and temporal consistency, making diffusion-based novel view synthesis more practical for autonomous driving and 3D scene perception.</li>
+        </ul>
+    </section>
+
+
+    <section class="maintext">
+            <hr>
+            <h2>Cite this work</h2>
+            A. Javadi, C.-S. Gau, K. D. Polyzos, and T. Javidi,
+            <b>A Single Image and Multimodality Is All You Need for Novel View Synthesis</b>,
+            ICLR 2026 Workshop.
+<pre>
+<code>@inproceedings{javadi2026singleimage,
+    title={A Single Image and Multimodality Is All You Need for Novel View Synthesis},
+    author={Javadi, Amirhosein and Gau, Chi-Shiang and Polyzos, Konstantinos D. and Javidi, Tara},
+    booktitle={ICLR 2026 Workshop},
+    year={2026},
+}</code>
+</pre>
+    </section>
+
+    
+    <section>
+        This webpage template was recycled from <u style="color:#5364cc"><a href='https://nv-tlabs.github.io/LION/'>here</a></u>.
+        <center><u style="color:#5364cc"><p><a href='https://accessibility.ucsd.edu/'><b>Accessibility</b></a></p></u></center>
+    </section>
+
+</div>
+</body>
+</html>
