@@ -506,7 +506,7 @@ pre {
             Example qualitative comparison (Ground Truth | Vision-Only | Ours) from the single-image novel view synthesis benchmark.
         </p>
         <center>
-            <img class="card-img-top img-fluid" src="images/00742_gt_moge_ours.gif" alt="Teaser qualitative result 00742" style="width:100%;max-width:100%;height:auto;border:1px solid #ddd;">
+            <img class="card-img-top img-fluid" src="/MultiModalNVS/images/00742_gt_moge_ours.gif" alt="Teaser qualitative result 00742" style="width:100%;max-width:100%;height:auto;border:1px solid #ddd;">
         </center>
     </section>
 
@@ -534,7 +534,7 @@ pre {
                 Multimodal novel view synthesis pipeline overview
             </p>
             <center>
-                <img class="card-img-top img-fluid" src="images/pipeline.png" alt="Multimodal NVS pipeline overview" style="width:750px;max-width:100%;height:auto;border:1px solid #ddd;">
+                <img class="card-img-top img-fluid" src="/MultiModalNVS/images/pipeline.png?v=20260206" alt="Multimodal NVS pipeline overview" style="width:750px;max-width:100%;height:auto;border:1px solid #ddd;">
             </center>
             <p class="caption"><b>Figure 1.</b> Multimodal novel view synthesis pipeline overview.</p>
             <p>
@@ -558,33 +558,33 @@ pre {
             Across diverse View-of-Delft scenes, replacing monocular depth with sparse range-based reconstruction gives better geometric alignment and visibly fewer rendering artifacts in novel views.
         </p>
         <div class="row">
-            <div class="column-full"><img class="img-fluid" src="images/00742_gt_moge_ours.gif" alt="Qualitative result 00742"></div>
-            <div class="column-full"><img class="img-fluid" src="images/01715_gt_moge_ours.gif" alt="Qualitative result 01715"></div>
-            <div class="column-full"><img class="img-fluid" src="images/01743_gt_moge_ours.gif" alt="Qualitative result 01743"></div>
-            <div class="column-full"><img class="img-fluid" src="images/02451_gt_moge_ours.gif" alt="Qualitative result 02451"></div>
-            <div class="column-full"><img class="img-fluid" src="images/07035_gt_moge_ours.gif" alt="Qualitative result 07035"></div>
-            <div class="column-full"><img class="img-fluid" src="images/07088_gt_moge_ours.gif" alt="Qualitative result 07088"></div>
-            <div class="column-full"><img class="img-fluid" src="images/08350_gt_moge_ours.gif" alt="Qualitative result 08350"></div>
-            <div class="column-full"><img class="img-fluid" src="images/08588_gt_moge_ours.gif" alt="Qualitative result 08588"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/00742_gt_moge_ours.gif" alt="Qualitative result 00742"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/01715_gt_moge_ours.gif" alt="Qualitative result 01715"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/01743_gt_moge_ours.gif" alt="Qualitative result 01743"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/02451_gt_moge_ours.gif" alt="Qualitative result 02451"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/07035_gt_moge_ours.gif" alt="Qualitative result 07035"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/07088_gt_moge_ours.gif" alt="Qualitative result 07088"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/08350_gt_moge_ours.gif" alt="Qualitative result 08350"></div>
+            <div class="column-full"><img class="img-fluid" src="/MultiModalNVS/images/08588_gt_moge_ours.gif" alt="Qualitative result 08588"></div>
         </div>
 
         <h3>Quantitative Results for Single-Image Novel View Synthesis</h3>
         <p>
             On View-of-Delft, replacing vision-only depth with our multimodal reconstruction improves all video-generation metrics for both sparse radar (0.02% coverage) and sparse LiDAR (0.52% coverage). Relative to the vision-only baseline, radar improves PSNR by about 15.4% and SSIM by 6.6%, while reducing LPIPS by 23.5%, FID by 46.0%, and temporal LPIPS by 29.3%; LiDAR further improves performance, reaching the best overall scores across all metrics.
         </p>
-        <center><img class="card-img-top img-fluid" src="images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
 
         <h3>Quantitative Results for Depth Estimation Accuracy</h3>
         <p>
             Against LiDAR depth on valid pixels, our sparse radar depth reconstruction achieves the lowest MAE and RMSE-log compared with monocular baselines.
         </p>
-        <center><img class="card-img-top img-fluid" src="images/Depth_metric.png" alt="Depth estimation quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/Depth_metric.png" alt="Depth estimation quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
 
         <h3>Ablation Study: Uncertainty-Based Masking</h3>
         <p>
             Masking high-uncertainty depth regions improves conditioning quality; retaining the most certain 80% gives the best trade-off between geometric reliability and coverage.
         </p>
-        <center><img class="card-img-top img-fluid" src="images/ablation_uncertanity_masking.png" alt="Ablation uncertainty masking" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/ablation_uncertanity_masking.png" alt="Ablation uncertainty masking" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
 
     </section>
 
