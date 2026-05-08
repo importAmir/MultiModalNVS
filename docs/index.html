@@ -190,6 +190,31 @@ figure {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
+/* Avoid focus rings / extra boxes around figures (Safari + Chrome) */
+section img,
+section video,
+figure img {
+    border: 0;
+    outline: none;
+}
+section table {
+    outline: none;
+}
+section img:focus,
+section img:focus-visible,
+section video:focus,
+figure img:focus {
+    outline: none;
+}
+
+.method-steps {
+    list-style-position: outside;
+    padding-left: 1.25em;
+}
+.method-steps > li > strong.method-bullet-title {
+    font-weight: 700;
+}
 #bibtex pre {
     font-size: 14px;
     background-color: #eee;
@@ -506,7 +531,7 @@ pre {
             Example qualitative comparison (Ground Truth | Vision-Only | Ours) from the single-image novel view synthesis benchmark.
         </p>
         <center>
-            <img class="card-img-top img-fluid" src="/MultiModalNVS/images/00742_gt_moge_ours.gif" alt="Teaser qualitative result 00742" style="width:100%;max-width:100%;height:auto;border:1px solid #ddd;">
+            <img class="card-img-top img-fluid" src="/MultiModalNVS/images/00742_gt_moge_ours.gif" alt="Teaser qualitative result 00742" style="width:100%;max-width:100%;height:auto;">
         </center>
     </section>
 
@@ -534,18 +559,16 @@ pre {
                 Multimodal novel view synthesis pipeline overview
             </p>
             <center>
-                <img class="card-img-top img-fluid" src="https://raw.githubusercontent.com/importAmir/MultiModalNVS/main/docs/images/figure1_method_overview.png" alt="Multimodal NVS pipeline overview" width="2200" height="990" loading="eager" decoding="sync" style="width:750px;max-width:100%;height:auto;border:1px solid #ddd;">
+                <img class="card-img-top img-fluid" src="https://raw.githubusercontent.com/importAmir/MultiModalNVS/main/docs/images/figure1_method_overview.png" alt="Multimodal NVS pipeline overview" width="2200" height="990" loading="eager" decoding="sync" style="width:750px;max-width:100%;height:auto;">
             </center>
             <p class="caption"><b>Figure 1.</b> Multimodal novel view synthesis pipeline overview.</p>
-            <p>
-                <ul>
-                    <li><b>Sparse Range Input &amp; Angular-Domain Projection.</b> Start with one RGB image and sparse radar or LiDAR measurements, then project both pixels and range points into a shared angular domain.</li>
-                    <li><b>Local Neighborhood Selection &amp; Localized GP Inference.</b> For each viewing direction, select nearby sparse range measurements and use a localized Gaussian Process to estimate depth efficiently.</li>
-                    <li><b>Dense Depth Map + Uncertainty Mask.</b> Produce a dense depth map along with uncertainty estimates, then mask high-uncertainty regions to remove unreliable geometry.</li>
-                    <li><b>3D Point Cloud Generation.</b> Back-project the RGB image using the reconstructed depth to form a colored 3D point cloud of the scene.</li>
-                    <li><b>Render Target Camera Views &amp; Let Diffusion Complete the Scene.</b> Render the point cloud along the target camera trajectory and feed the frames to a diffusion model to synthesize temporally consistent novel views.</li>
-                </ul>
-            </p>
+            <ul class="method-steps">
+                <li><strong class="method-bullet-title">Sparse Range Input &amp; Angular-Domain Projection.</strong> Start with one RGB image and sparse radar or LiDAR measurements, then project both pixels and range points into a shared angular domain.</li>
+                <li><strong class="method-bullet-title">Local Neighborhood Selection &amp; Localized GP Inference.</strong> For each viewing direction, select nearby sparse range measurements and use a localized Gaussian Process to estimate depth efficiently.</li>
+                <li><strong class="method-bullet-title">Dense Depth Map + Uncertainty Mask.</strong> Produce a dense depth map along with uncertainty estimates, then mask high-uncertainty regions to remove unreliable geometry.</li>
+                <li><strong class="method-bullet-title">3D Point Cloud Generation.</strong> Back-project the RGB image using the reconstructed depth to form a colored 3D point cloud of the scene.</li>
+                <li><strong class="method-bullet-title">Render Target Camera Views &amp; Let Diffusion Complete the Scene.</strong> Render the point cloud along the target camera trajectory and feed the frames to a diffusion model to synthesize temporally consistent novel views.</li>
+            </ul>
         </div>
     </section>
 
@@ -572,19 +595,19 @@ pre {
         <p>
             On View-of-Delft, replacing vision-only depth with our multimodal reconstruction improves all video-generation metrics for both sparse radar (0.02% coverage) and sparse LiDAR (0.52% coverage). Relative to the vision-only baseline, radar improves PSNR by about 15.4% and SSIM by 6.6%, while reducing LPIPS by 23.5%, FID by 46.0%, and temporal LPIPS by 29.3%; LiDAR further improves performance, reaching the best overall scores across all metrics.
         </p>
-        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/NVS_Metric.png" alt="NVS quantitative metrics" style="width:900px;max-width:100%;height:auto;"></center>
 
         <h3>Quantitative Results for Depth Estimation Accuracy</h3>
         <p>
             Against LiDAR depth on valid pixels, our sparse radar depth reconstruction achieves the lowest MAE and RMSE-log compared with monocular baselines.
         </p>
-        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/Depth_metric.png" alt="Depth estimation quantitative metrics" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/Depth_metric.png" alt="Depth estimation quantitative metrics" style="width:900px;max-width:100%;height:auto;"></center>
 
         <h3>Ablation Study: Uncertainty-Based Masking</h3>
         <p>
             Masking high-uncertainty depth regions improves conditioning quality; retaining the most certain 80% gives the best trade-off between geometric reliability and coverage.
         </p>
-        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/ablation_uncertanity_masking.png" alt="Ablation uncertainty masking" style="width:900px;max-width:100%;height:auto;border:1px solid #ddd;"></center>
+        <center><img class="card-img-top img-fluid" src="/MultiModalNVS/images/ablation_uncertanity_masking.png" alt="Ablation uncertainty masking" style="width:900px;max-width:100%;height:auto;"></center>
 
     </section>
 
